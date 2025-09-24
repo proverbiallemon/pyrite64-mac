@@ -11,8 +11,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O2")
 
 add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
 
-#make an imgui folder and put all of these files in the imgui folder
-set(IMGUI_SRC
+# Create your game executable target as usual
+add_executable(p64editor src/main.cpp
+        # imgui
         vendored/imgui/backends/imgui_impl_sdl3.cpp
         vendored/imgui/backends/imgui_impl_sdl3.h
         vendored/imgui/backends/imgui_impl_sdlgpu3.cpp
@@ -22,12 +23,15 @@ set(IMGUI_SRC
         vendored/imgui/imgui_draw.cpp
         vendored/imgui/imgui_tables.cpp
         vendored/imgui/imgui_widgets.cpp
-)
 
-# Create your game executable target as usual
-add_executable(p64editor src/main.cpp ${IMGUI_SRC}
+        # editor
         src/editor/editorScene.h
         src/editor/editorScene.cpp
+        src/renderer/shader.h
+        src/renderer/shader.cpp
+        src/renderer/vertBuffer.h
+        src/renderer/vertBuffer.cpp
+        src/renderer/vertex.h
 )
 
 target_include_directories(p64editor PRIVATE vendored/imgui)
