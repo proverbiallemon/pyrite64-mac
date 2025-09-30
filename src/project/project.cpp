@@ -37,6 +37,7 @@ Project::Project::Project(const std::string &path)
   ctx.project = this;
   deserialize(Utils::JSON::loadFile(pathConfig));
   assets.reload();
+  scenes.reload();
 }
 
 void Project::Project::save() {
@@ -44,4 +45,5 @@ void Project::Project::save() {
   SDL_SaveFile(pathConfig.c_str(), json.c_str(), json.size());
 
   assets.save();
+  scenes.save();
 }

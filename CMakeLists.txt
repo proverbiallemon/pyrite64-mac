@@ -72,6 +72,10 @@ add_executable(p64editor src/main.cpp
         src/editor/pages/parts/assetInspector.cpp
         src/editor/pages/parts/assetInspector.h
         src/utils/textureFormats.h
+        src/editor/pages/parts/sceneBrowser.cpp
+        src/project/scene/sceneManager.h
+        src/project/scene/sceneManager.cpp
+        src/project/scene/scene.h
 )
 
 target_include_directories(p64editor PRIVATE

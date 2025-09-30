@@ -6,6 +6,7 @@
 #include <string>
 
 #include "assetManager.h"
+#include "scene/sceneManager.h"
 #include "simdjson.h"
 
 namespace Project
@@ -17,6 +18,7 @@ namespace Project
       std::string pathConfig;
 
       AssetManager assets{};
+      SceneManager scenes{};
 
       void deserialize(const simdjson::simdjson_result<simdjson::dom::element> &doc);
       std::string serialize() const;
@@ -37,6 +39,7 @@ namespace Project
       void save();
 
       AssetManager& getAssets() { return assets; }
+      SceneManager& getScenes() { return scenes; }
       [[nodiscard]] const std::string &getPath() const { return path; }
 
   };

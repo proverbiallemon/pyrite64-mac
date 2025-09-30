@@ -55,11 +55,21 @@ void Editor::Scene::draw()
     auto dockRightID = ImGui::DockBuilderSplitNode(dockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &dockSpaceID);
     auto dockBottomID = ImGui::DockBuilderSplitNode(dockSpaceID, ImGuiDir_Down, 0.25f, nullptr, &dockSpaceID);
 
-    ImGui::DockBuilderDockWindow("Project", dockLeftID);
+    // Center
     ImGui::DockBuilderDockWindow("3D-Viewport", dockSpaceID);
+
+    // Left
+    ImGui::DockBuilderDockWindow("Project", dockLeftID);
+
+    // Right
     ImGui::DockBuilderDockWindow("Asset", dockRightID);
     ImGui::DockBuilderDockWindow("Object", dockRightID);
+
+    // Bottom
+    ImGui::DockBuilderDockWindow("Scenes", dockBottomID);
     ImGui::DockBuilderDockWindow("Assets", dockBottomID);
+
+
     ImGui::DockBuilderFinish(dockSpaceID);
   }
 
@@ -67,17 +77,24 @@ void Editor::Scene::draw()
     viewport3d.draw();
   ImGui::End();
 
+  //if (ctx.selAssetUUID) {
   ImGui::Begin("Asset");
     assetInspector.draw();
   ImGui::End();
+  //}
 
   ImGui::Begin("Object");
     ImGui::Text("Objects");
   ImGui::End();
 
+  ImGui::Begin("Scenes");
+    sceneBrowser.draw();
+  ImGui::End();
+
   ImGui::Begin("Assets");
     assetsBrowser.draw();
   ImGui::End();
+
 
   ImGui::Begin("Project");
 
