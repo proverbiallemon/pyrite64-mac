@@ -30,8 +30,16 @@ std::string Project::SceneConf::serialize() const {
   builder.append_key_value<"fbFormat">(fbFormat);
   builder.append_comma();
 
-  //builder.append_key_value<"clearColor">(clearColor.rgba);
-  //builder.append_comma();
+  builder.escape_and_append_with_quotes("clearColor");
+  builder.append_colon();
+  builder.start_array();
+    builder.append(clearColor.r); builder.append_comma();
+    builder.append(clearColor.g); builder.append_comma();
+    builder.append(clearColor.b); builder.append_comma();
+    builder.append(clearColor.a);
+  builder.end_array();
+  builder.append_comma();
+
   builder.append_key_value<"doClearColor">(doClearColor);
   builder.append_comma();
   builder.append_key_value<"doClearDepth">(doClearDepth);
@@ -51,7 +59,13 @@ Project::Scene::Scene(int id_)
     JSON_GET_INT(fbHeight);
     JSON_GET_INT(fbFormat);
     //JSON_GET_FLOAT(clearColor);
-    //conf.clearColor.r = Utils::JSON::readFloat(doc, #key);
+
+
+    auto col = doc["clearColor"].get_array();
+    conf.clearColor.r = col.at(0).get_double();
+    conf.clearColor.g = col.at(1).get_double();
+    conf.clearColor.b = col.at(2).get_double();
+    conf.clearColor.a = col.at(3).get_double();
     JSON_GET_BOOL(doClearColor);
     JSON_GET_BOOL(doClearDepth);
   }
