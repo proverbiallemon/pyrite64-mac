@@ -89,10 +89,6 @@ void Editor::Scene::draw()
     ImGui::Text("Objects");
   ImGui::End();
 
-  ImGui::Begin("Log");
-    logWindow.draw();
-  ImGui::End();
-
   ImGui::Begin("Scenes");
     sceneBrowser.draw();
   ImGui::End();
@@ -107,6 +103,9 @@ void Editor::Scene::draw()
     assetsBrowser.draw();
   ImGui::End();
 
+  ImGui::Begin("Log");
+    logWindow.draw();
+  ImGui::End();
 
 
   ImGui::Begin("Project");

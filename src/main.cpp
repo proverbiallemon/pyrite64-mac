@@ -142,6 +142,8 @@ int main(int, char**)
       if (ctx.isBuildOrRunning)return false;
       if (!ctx.project)return false;
 
+      ImGui::SetWindowFocus("Log");
+
       std::string runCmd{};
       if (arg == "run") {
         runCmd = ctx.project->conf.pathEmu + " " + ctx.project->getPath()
