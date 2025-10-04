@@ -95,7 +95,7 @@ namespace ImGui::InpTable
     }
   }
 
-  inline void addPath(const std::string &name, std::string &str, bool isDir = false) {
+  inline void addPath(const std::string &name, std::string &str, bool isDir = false, const std::string &placeholder = "") {
 
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
@@ -112,7 +112,12 @@ namespace ImGui::InpTable
     }
     ImGui::PopID();
     ImGui::SameLine();
-    ImGui::InputText(labelHidden.c_str(), &str);
+
+    if (placeholder.empty()) {
+      ImGui::InputText(labelHidden.c_str(), &str);
+    } else {
+      ImGui::InputTextWithHint(labelHidden.c_str(), placeholder.c_str(), &str);
+    }
   }
 
 }

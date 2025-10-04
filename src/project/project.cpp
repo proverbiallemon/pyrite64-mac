@@ -20,8 +20,6 @@ std::string Project::ProjectConf::serialize() const {
   builder.append_comma();
   builder.append_key_value<"pathEmu">(pathEmu);
   builder.append_comma();
-  builder.append_key_value<"pathLibdragon">(pathLibdragon);
-  builder.append_comma();
   builder.append_key_value<"pathN64Inst">(pathN64Inst);
   builder.end_object();
   return {builder.c_str()};
@@ -31,7 +29,6 @@ void Project::Project::deserialize(const simdjson_result<dom::element> &doc) {
   JSON_GET_STR(name);
   JSON_GET_STR(romName);
   JSON_GET_STR(pathEmu);
-  JSON_GET_STR(pathLibdragon);
   JSON_GET_STR(pathN64Inst);
 }
 

@@ -16,7 +16,6 @@ namespace Project
     std::string name{};
     std::string romName{};
     std::string pathEmu{};
-    std::string pathLibdragon{};
     std::string pathN64Inst{};
 
     std::string serialize() const;

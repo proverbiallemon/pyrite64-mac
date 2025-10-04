@@ -120,8 +120,7 @@ void Editor::Scene::draw()
   if (ImGui::CollapsingHeader("Environment", ImGuiTreeNodeFlags_DefaultOpen)) {
     ImGui::InpTable::start("Environment");
     ImGui::InpTable::addPath("Emulator", ctx.project->conf.pathEmu);
-    ImGui::InpTable::addPath("Libdragon", ctx.project->conf.pathLibdragon, true);
-    ImGui::InpTable::addPath("N64_INST", ctx.project->conf.pathN64Inst, true);
+    ImGui::InpTable::addPath("N64_INST", ctx.project->conf.pathN64Inst, true, "$N64_INST");
     ImGui::InpTable::end();
   }
 
