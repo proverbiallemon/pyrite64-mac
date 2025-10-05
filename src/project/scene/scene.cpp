@@ -2,12 +2,9 @@
 * @copyright 2025 - Max Bebök
 * @license MIT
 */
-#pragma once
-
 #include "scene.h"
+#include "object.h"
 #include <SDL3/SDL.h>
-#include <algorithm>
-
 #include "IconsFontAwesome4.h"
 #include "simdjson.h"
 #include "../../utils/json.h"
@@ -18,7 +15,7 @@ namespace
 {
   std::string getConfPath(int id) {
     auto scenesPath = ctx.project->getPath() + "/data/scenes";
-    return scenesPath + "/" + std::to_string(id) + "/conf.json";
+    return scenesPath + "/" + std::to_string(id) + "/scene.json";
   }
 
   constinit uint64_t nextUUID{1};
@@ -61,33 +58,7 @@ Project::Scene::Scene(int id_)
   root.id = 0;
   root.name = "Scene";
   root.uuid = Utils::Hash::sha256_64bit(root.name);
-
-  auto doc = Utils::JSON::loadFile(getConfPath(id));
-  if (doc.is_object()) {
-    JSON_GET_STR(name);
-    JSON_GET_INT(fbWidth);
-    JSON_GET_INT(fbHeight);
-    JSON_GET_INT(fbFormat);
-    //JSON_GET_FLOAT(clearColor);
-
-    auto clearColor = doc["clearColor"];
-    if (!clearColor.error()) {
-      auto col = clearColor.get_array();
-      conf.clearColor.r = col.at(0).get_double();
-      conf.clearColor.g = col.at(1).get_double();
-      conf.clearColor.b = col.at(2).get_double();
-      conf.clearColor.a = col.at(3).get_double();
-    }
-    JSON_GET_BOOL(doClearColor);
-    JSON_GET_BOOL(doClearDepth);
-  }
-}
-
-void Project::Scene::save()
-{
-  auto pathConfig = getConfPath(id);
-  auto json = conf.serialize();
-  SDL_SaveFile(pathConfig.c_str(), json.c_str(), json.size());
+  deserialize(Utils::FS::loadTextFile(getConfPath(id)));
 }
 
 std::shared_ptr<Project::Object> Project::Scene::addObject(Object &parent) {
@@ -111,4 +82,47 @@ void Project::Scene::removeObject(Object &obj) {
     [&obj](const std::shared_ptr<Object> &ref) { return ref->uuid == obj.uuid; }
   );
   objectsMap.erase(obj.uuid);
+}
+
+void Project::Scene::save()
+{
+  auto pathConfig = getConfPath(id);
+  Utils::FS::saveTextFile(pathConfig, serialize());
+}
+
+std::string Project::Scene::serialize() {
+  auto json = conf.serialize();
+  auto graph = root.serialize();
+
+  return std::string{"{\n"}
+    + "\"conf\": " + json + ",\n"
+    + "\"graph\": " + graph + "\n"
+    + "}\n";
+}
+
+void Project::Scene::deserialize(const std::string &data)
+{
+  if(data.empty())return;
+
+  auto doc = Utils::JSON::load(data);
+  if (!doc.is_object())return;
+
+  auto docConf = doc["conf"];
+  if (docConf.is_object()) {
+    conf.name = Utils::JSON::readString(docConf, "name");
+    conf.fbWidth = Utils::JSON::readInt(docConf, "fbWidth");
+    conf.fbHeight = Utils::JSON::readInt(docConf, "fbHeight");
+    conf.fbFormat = Utils::JSON::readInt(docConf, "fbFormat");
+
+    auto clearColor = docConf["clearColor"];
+    if (!clearColor.error()) {
+      auto col = clearColor.get_array();
+      conf.clearColor.r = col.at(0).get_double();
+      conf.clearColor.g = col.at(1).get_double();
+      conf.clearColor.b = col.at(2).get_double();
+      conf.clearColor.a = col.at(3).get_double();
+    }
+    conf.doClearColor = Utils::JSON::readBool(docConf, "doClearColor");
+    conf.doClearDepth = Utils::JSON::readBool(docConf, "doClearDepth");
+  }
 }

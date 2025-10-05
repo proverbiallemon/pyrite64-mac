@@ -11,6 +11,11 @@ namespace Utils::JSON
 {
   inline simdjson::dom::parser parser{};
 
+  inline simdjson::simdjson_result<simdjson::dom::element> load(const std::string &json) {
+    auto doc = parser.parse(std::string_view{json});
+    return doc;
+  }
+
   inline simdjson::simdjson_result<simdjson::dom::element> loadFile(const std::string &path) {
     auto jsonData = FS::loadTextFile(path);
 
@@ -58,7 +63,7 @@ namespace Utils::JSON
     return (float)(*f);
   }
 
-  inline float readBool(const simdjson::simdjson_result<simdjson::dom::element> &el, const std::string &key) {
+  inline bool readBool(const simdjson::simdjson_result<simdjson::dom::element> &el, const std::string &key) {
     auto val = el[key];
     if (val.error() != simdjson::SUCCESS) {
       return false;

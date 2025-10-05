@@ -4,3 +4,6 @@
 */
 #include "object.h"
 
+std::string Project::Object::serialize() {
+  return "{}";
+}

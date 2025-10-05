@@ -21,5 +21,7 @@ namespace Project
       std::vector<std::shared_ptr<Object>> children{};
 
       explicit Object(Object* parent) : parent{parent} {}
+
+      std::string serialize();
   };
 }

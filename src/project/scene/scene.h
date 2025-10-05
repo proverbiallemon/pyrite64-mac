@@ -50,5 +50,8 @@ namespace Project
         }
         return nullptr;
       }
+
+      std::string serialize();
+      void deserialize(const std::string &data);
   };
 }
