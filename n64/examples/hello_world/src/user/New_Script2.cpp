@@ -5,6 +5,11 @@ namespace P64::Script::C3AF5D870988CBC0
 {
   void update()
   {
-    debugf("Script B (C3AF5D870988CBC0)\n");
+   //
+    auto pressed = joypad_get_buttons_pressed(JOYPAD_PORT_1);
+    if (pressed.b) {
+      debugf("Script B (C3AF5D870988CBC0)\n");
+      SceneManager::load(1);
+    }
   }
 }

@@ -5,6 +5,8 @@
 #pragma once
 #include <libdragon.h>
 #include <vector>
+
+#include "object.h"
 #include "scene/camera.h"
 
 namespace P64
@@ -34,7 +36,8 @@ namespace P64
       char* stringTable{nullptr};
       rspq_block_t *dplObjects{nullptr};
 
-      //std::vector<Actor::Base*> actors{};
+      // @TODO: avoid vector + fragmented alloc
+      std::vector<Object*> objects{};
 
       SceneConf conf{};
       uint16_t id;

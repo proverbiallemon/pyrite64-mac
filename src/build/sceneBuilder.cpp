@@ -8,6 +8,7 @@
 
 #include "../utils/binaryFile.h"
 #include "../utils/fs.h"
+#include "../utils/logger.h"
 
 namespace fs = std::filesystem;
 
@@ -36,25 +37,31 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
   if (sc->conf.fbFormat)flags |= FLAG_SCR_32BIT;
 
   ctx.fileObj = {};
-  for (auto obj : sc->objectsMap) {
+  for (auto objEntry : sc->objectsMap) {
+    auto &obj = *objEntry.second;
     ctx.fileObj.write<uint16_t>(0); // @TODO type
+    ctx.fileObj.write<uint16_t>(obj.id);
     auto posSize = ctx.fileObj.getPos();
-    ctx.fileObj.write<uint16_t>(0);
+    ctx.fileObj.write<uint16_t>(0); // size, filled later
 
     // DATA
-    for (auto &comp : obj.second->components) {
+    for (auto &comp : obj.components) {
       ctx.fileObj.write<uint16_t>(comp.id);
-      if (comp.id > 0 && comp.id < Project::Component::TABLE.size()) {
-        Project::Component::TABLE[comp.id].funcBuild(*obj.second, comp, ctx);
+      if (comp.id >= 0 && comp.id < Project::Component::TABLE.size()) {
+        Project::Component::TABLE[comp.id].funcBuild(obj, comp, ctx);
+      } else {
+        Utils::Logger::log("Component ID not found: " + std::to_string(comp.id), Utils::Logger::LEVEL_ERROR);
+        assert(false);
       }
     }
-    ctx.fileObj.align(4);
 
-    auto size = ctx.fileObj.getPos() - posSize + 2;
+    auto size = ctx.fileObj.getPos() - posSize + 4;
 
     ctx.fileObj.posPush(posSize);
       ctx.fileObj.write<uint16_t>(size);
     ctx.fileObj.posPop();
+
+    ctx.fileObj.align(4);
   }
 
   ctx.fileObj.writeToFile(fsDataPath / fileNameObj);

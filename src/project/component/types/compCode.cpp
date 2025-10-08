@@ -37,8 +37,10 @@ namespace Project::Component::Code
 
   void build(Object&, Entry &entry, Build::SceneCtx &ctx)
   {
-    auto idRes = ctx.codeIdxMapUUID.find(entry.uuid);
-    uint32_t id = 0xDEAD'DEAD;
+    Data &data = *static_cast<Data*>(entry.data.get());
+
+    auto idRes = ctx.codeIdxMapUUID.find(data.scriptUUID);
+    uint16_t id = 0xDEAD;
     if (idRes == ctx.codeIdxMapUUID.end()) {
       Utils::Logger::log("Component Code: Script UUID not found: " + std::to_string(entry.uuid), Utils::Logger::LEVEL_ERROR);
     } else {

@@ -14,6 +14,7 @@
 #include "lib/assetManager.h"
 #include "audio/audioManager.h"
 #include "../audio/audioManagerPrivate.h"
+#include "script/scriptTable.h"
 
 namespace
 {
@@ -51,7 +52,8 @@ P64::Scene::~Scene()
 {
   rspq_wait();
   sprite_free(sprite);
-  rspq_block_free(dplObjects);
+
+  if (dplObjects)rspq_block_free(dplObjects);
 
   if(objStaticMats)free(objStaticMats);
   free(stringTable);
@@ -77,9 +79,19 @@ void P64::Scene::update(float deltaTime) {
     cam.update(deltaTime);
   }
 
-  /*for(auto actor : actors) {
-    actor->update(deltaTime);
-  }*/
+  for(auto obj : objects)
+  {
+    for (auto comp : obj->compRefs)
+    {
+      uint32_t compType = comp >> 24;
+      if (compType == 0) {
+        auto fn = (Script::FuncUpdate)(comp | 0x8000'0000);
+        fn();
+      } else {
+        assert(compType == 0);
+      }
+    }
+  }
 
   AudioManager::update();
 

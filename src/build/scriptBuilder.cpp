@@ -30,7 +30,7 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
 
     sceneCtx.codeIdxMapUUID[script.uuid] = idx;
 
-    //Utils::Logger::log("Script: " + uuidStr);
+    Utils::Logger::log("Script: " + uuidStr + " -> " + std::to_string(idx));
     ++idx;
   }
 

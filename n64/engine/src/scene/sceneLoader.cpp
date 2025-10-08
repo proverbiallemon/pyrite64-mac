@@ -2,6 +2,7 @@
 * @copyright 2025 - Max Bebök
 * @license MIT
 */
+#include <cstdint>
 #include <libdragon.h>
 #include <t3d/t3d.h>
 #include <t3d/t3dmodel.h>
@@ -13,27 +14,20 @@
 #include "lib/logger.h"
 #include "lib/matrixManager.h"
 #include "lib/assetManager.h"
+#include "script/scriptTable.h"
 
 namespace {
-  constexpr uint16_t OBJ_TYPE_ACTOR_MASK  = 1 << 15;
-
-  constexpr uint16_t OBJ_TYPE_ACTOR  = 0;
-  constexpr uint16_t OBJ_TYPE_MESH   = 1;
-  constexpr uint16_t OBJ_TYPE_CAMERA = 2;
+  constexpr uint16_t OBJ_TYPE_OBJECT = 0;
+  constexpr uint16_t OBJ_TYPE_CAMERA = 1;
 
   struct ObjectEntry {
     uint16_t type;
+    uint16_t id;
     uint16_t size;
     // data follows
   };
 
-  struct __attribute__((packed)) ObjectEntryMesh : public ObjectEntry {
-    uint32_t t3dmHash;
-    char* t3dmPath;
-  };
-
   struct __attribute__((packed)) ObjectEntryCamera : public ObjectEntry {
-    uint16_t id;
     uint16_t _padding;
     fm_vec3_t pos{};
     fm_quat_t rot{};
@@ -112,23 +106,39 @@ void P64::Scene::loadScene() {
     objFile = objFileStart;
     for(uint32_t i=0; i<conf.objectCount; ++i)
     {
-      ObjectEntry* obj = (ObjectEntry*)objFile;
-      uint32_t objType = (obj->type & OBJ_TYPE_ACTOR_MASK) ? OBJ_TYPE_ACTOR : obj->type;
+      ObjectEntry* objEntry = (ObjectEntry*)objFile;
 
-      debugf("OBJECT: type=%d, size=%d\n", obj->type, obj->size);
+      debugf("OBJECT: id=%d type=%d, size=%d\n", objEntry->id, objEntry->type, objEntry->size);
 
-      switch (objType)
+      switch (objEntry->type)
       {
-        case OBJ_TYPE_ACTOR: {
-          //uint16_t actorType = obj->type & ~OBJ_TYPE_ACTOR_MASK;
-          //addActor(actorType, (Actor::Base::Args*)((char*)objFile + 4));
+        case OBJ_TYPE_OBJECT: {
+          auto ptr = objFile + sizeof(ObjectEntry);
+          auto ptrEnd = objFile + objEntry->size;
+          debugf("ptr-ptrEnd: %p - %p\n", ptr, ptrEnd);
+
+          Object *obj = new Object();
+          obj->id = objEntry->id;
+
+          while(ptr < ptrEnd) {
+            uint16_t compId = ((uint16_t*)ptr)[0];
+            assert(compId == 0); // <- @TODO
+
+            // CODE
+            uint16_t codeIdx = ((uint16_t*)ptr)[1];
+            auto scriptPtr = Script::getCodeByIndex(codeIdx);
+            assert(scriptPtr != nullptr);
+
+            obj->compRefs.push_back((uint32_t)(scriptPtr) & 0x00FF'FFFF);
+            objects.push_back(obj);
+
+            ptr += 4;
+          }
+
         } break;
 
-        // ignore, was processed before already
-        case OBJ_TYPE_MESH: break;
-
         case OBJ_TYPE_CAMERA: {
-          auto* objCam = (ObjectEntryCamera*)obj;
+          auto* objCam = (ObjectEntryCamera*)objEntry;
           auto &cam = cameras[camIdx++];
           cam.setPos(objCam->pos);
           cam.fov  = objCam->fov;
@@ -145,11 +155,13 @@ void P64::Scene::loadScene() {
         } break;
 
         default:
-          debugf("Unknown object type: %04X\n", obj->type);
+          debugf("Unknown object type: %04X\n", objEntry->type);
           break;
       }
 
-      objFile += obj->size;
+      objFile += objEntry->size;
+      // align to 4 bytes
+      objFile = (char*)(((uint32_t)objFile + 3) & ~3);
     }
 
     free(objFileStart);
