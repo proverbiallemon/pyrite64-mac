@@ -40,5 +40,6 @@ namespace P64::Script::C3AF5D870988CBC0
   {
     uint8_t green = (fm_sinf(data->speed) * 0.5f + 0.5f) * 255;
     rdpq_set_prim_color({0xFF, green, 0, 0xFF});
+    rdpq_set_env_color({0x80, 0x80, 0x80, 0x80});
   }
 }

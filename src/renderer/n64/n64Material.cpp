@@ -8,8 +8,22 @@
 
 namespace
 {
+  constexpr uint64_t RDPQ_COMBINER_2PASS = (uint64_t)(1) << 63;
+
   constexpr uint32_t getBits(uint64_t value, uint32_t start, uint32_t end) {
     return (value << (63 - end)) >> (63 - end + start);
+  }
+
+  constexpr void switchColTex2Cycle(int32_t &c) {
+    if (c == CC_C_TEX0) c = CC_C_TEX1;
+    else if (c == CC_C_TEX1) c = CC_C_TEX0;
+    else if (c == CC_C_TEX0_ALPHA) c = CC_C_TEX1_ALPHA;
+    else if (c == CC_C_TEX1_ALPHA) c = CC_C_TEX0_ALPHA;
+  }
+
+  constexpr void switchAlphaTex2Cycle(int32_t &c) {
+    if (c == CC_A_TEX0) c = CC_A_TEX1;
+    else if (c == CC_A_TEX1) c = CC_A_TEX0;
   }
 }
 
@@ -19,6 +33,15 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Material &t3d
   auto &texB = t3dMat.texB;
 
   uint64_t cc = t3dMat.colorCombiner;
+
+  part.material.geoMode = t3dMat.drawFlags;
+  part.material.otherModeH = t3dMat.otherModeValue >> 32;
+  part.material.otherModeL = t3dMat.otherModeValue & 0xFFFFFFFF;
+
+  if (cc & RDPQ_COMBINER_2PASS) {
+    part.material.otherModeH |= G_CYC_2CYCLE;
+  }
+
   part.material.cc0Color = { getBits(cc, 52, 55), getBits(cc, 28, 31), getBits(cc, 47, 51), getBits(cc, 15, 17) };
   part.material.cc0Alpha = { getBits(cc, 44, 46), getBits(cc, 12, 14), getBits(cc, 41, 43), getBits(cc, 9, 11)  };
   part.material.cc1Color = { getBits(cc, 37, 40), getBits(cc, 24, 27), getBits(cc, 32, 36), getBits(cc, 6, 8)   };
@@ -31,7 +54,8 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Material &t3d
     part.material.cc0Alpha[i] = CC_MAP_ALPHA[i][part.material.cc0Alpha[i]];
     part.material.cc1Alpha[i] = CC_MAP_ALPHA[i][part.material.cc1Alpha[i]];
 
-    // @TODO: tex0 in 2-cycle mode
+    switchColTex2Cycle(part.material.cc1Color[i]);
+    switchAlphaTex2Cycle(part.material.cc1Alpha[i]);
   }
 
   part.material.colPrim = {
@@ -51,10 +75,6 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Material &t3d
     texA.s.mask, texA.t.mask,
     texB.s.mask, texB.t.mask,
   };
-  part.material.shift = {
-    texA.s.shift, texA.t.shift,
-    texB.s.shift, texB.t.shift,
-  };
   part.material.low = {
     texA.s.low, texA.t.low,
     texB.s.low, texB.t.low,
@@ -65,17 +85,17 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Material &t3d
   };
 
   part.material.mask = {
-    (1 << texA.s.mask),
-    (1 << texA.t.mask),
-    (1 << texB.s.mask),
-    (1 << texB.t.mask),
+    std::pow(2, texA.s.mask),
+    std::pow(2, texA.t.mask),
+    std::pow(2, texB.s.mask),
+    std::pow(2, texB.t.mask),
   };
 
   part.material.shift = {
-    1.0f / (float)(1 << texA.s.shift),
-    1.0f / (float)(1 << texA.t.shift),
-    1.0f / (float)(1 << texB.s.shift),
-    1.0f / (float)(1 << texB.t.shift),
+    1.0f / std::pow(2, texA.s.shift),
+    1.0f / std::pow(2, texA.t.shift),
+    1.0f / std::pow(2, texB.s.shift),
+    1.0f / std::pow(2, texB.t.shift),
   };
 
 
@@ -104,8 +124,4 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Material &t3d
   if (texA.t.mirror) part.material.high[1] = -part.material.high[1];
   if (texB.s.mirror) part.material.high[2] = -part.material.high[2];
   if (texB.t.mirror) part.material.high[3] = -part.material.high[3];
-
-  part.material.geoMode = t3dMat.drawFlags;
-  part.material.otherModeH = t3dMat.otherModeValue >> 32;
-  part.material.otherModeL = t3dMat.otherModeValue & 0xFFFFFFFF;
 }

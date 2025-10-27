@@ -78,7 +78,9 @@ void Project::AssetManager::reloadEntry(Entry &entry, const std::string &path)
 
     case FileType::MODEL_3D:
     {
-      try {
+      try{
+        config.assetPath = fs::path{project->getPath()} / "assets" / "";
+        config.assetPathFull = fs::absolute(config.assetPath).string();
         entry.t3dmData = parseGLTF(path.c_str(), entry.conf.baseScale);
         if (!entry.t3dmData.models.empty()) {
           if (!entry.mesh3D) {
@@ -86,8 +88,8 @@ void Project::AssetManager::reloadEntry(Entry &entry, const std::string &path)
           }
           entry.mesh3D->fromT3DM(entry.t3dmData, *this);
         }
-      } catch (...) {
-        Utils::Logger::log("Failed to load 3D model asset: " + entry.path);
+      } catch (std::exception &e) {
+        Utils::Logger::log("Failed to load 3D model asset: " + entry.path + " - " + e.what(), Utils::Logger::LEVEL_ERROR);
       }
     }
     break;
