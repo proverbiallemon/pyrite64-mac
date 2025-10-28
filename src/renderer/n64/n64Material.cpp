@@ -5,6 +5,7 @@
 #include "n64Material.h"
 #include "../../shader/defines.h"
 #include "ccMapping.h"
+#include "tiny3d/tools/gltf_importer/src/parser/rdp.h"
 
 namespace
 {
@@ -41,6 +42,12 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const Material &t3d
   if (cc & RDPQ_COMBINER_2PASS) {
     part.material.otherModeH |= G_CYC_2CYCLE;
   }
+
+  part.material.lightDir[0].w = 0.0f; // no alpha clip
+  if (t3dMat.otherModeValue & RDP::SOM::ALPHA_COMPARE) {
+    part.material.lightDir[0].w = 0.5f;
+  }
+
 
   part.material.cc0Color = { getBits(cc, 52, 55), getBits(cc, 28, 31), getBits(cc, 47, 51), getBits(cc, 15, 17) };
   part.material.cc0Alpha = { getBits(cc, 44, 46), getBits(cc, 12, 14), getBits(cc, 41, 43), getBits(cc, 9, 11)  };

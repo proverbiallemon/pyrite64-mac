@@ -29,22 +29,25 @@ void fetchTex01Filtered(in ivec4 texSize, out vec4 texData0, out vec4 texData1)
   ivec4 uv0 = ivec4(floor(uv));
   vec4 ratio = uv - vec4(uv0);
 
-  ivec2 lower_flag = ivec2(step(0.0, ratio.xz - ratio.yw));
-  ivec4 corner = ivec4(
-    lower_flag.x, 1 - lower_flag.x,
-    lower_flag.y, 1 - lower_flag.y
+  ivec2 lower_flag = ivec2(step(1.0, ratio.xz + ratio.yw));
+  ivec4 corner0 = ivec4(
+    lower_flag.x, lower_flag.x,
+    lower_flag.y, lower_flag.y
   );
+  const ivec4 corner1 = ivec4(0,1,0,1);
+  const ivec4 corner2 = ivec4(1,0,1,0);
 
-  ivec4 uv1 = uv0 + corner;
-  ivec4 uv2 = uv0 + 1;
+  ivec4 uv1 = uv0 + corner0;
+  ivec4 uv2 = uv0 + corner2;
+  uv0 += corner1;
 
   uv0 = wrappedMirror(texSize, uv0);
   uv1 = wrappedMirror(texSize, uv1);
   uv2 = wrappedMirror(texSize, uv2);
 
-  vec4 v0 = vec4(0 - corner);
-  vec4 v1 = vec4(1 - corner);
-  vec4 v2 = ratio - vec4(corner);
+  vec4 v0 = vec4(corner1 - corner0);
+  vec4 v1 = vec4(corner2 - corner0);
+  vec4 v2 = ratio - vec4(corner0);
 
   vec2 den = v0.xw * v1.yz - v1.xw * v0.yz;
 
