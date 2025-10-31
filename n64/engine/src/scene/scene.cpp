@@ -77,6 +77,8 @@ void P64::Scene::update(float deltaTime) {
   joypad_poll();
   AudioManager::update();
 
+  lighting.reset();
+
   for(auto &cam : cameras) {
     cam.update(deltaTime);
   }
@@ -119,14 +121,13 @@ void P64::Scene::draw(float deltaTime)
     t3d_screen_clear_color(conf.clearColor);
   }
 
-  //t3d_light_set_ambient({0xFF, 0xFF, 0xFF, 0xFF});
-  t3d_light_set_count(2);
-
   // 3D Pass, for every active camera
   for(auto &cam : cameras)
   {
     camMain = &cam;
     cam.attach();
+
+    lighting.apply();
 
     t3d_matrix_push_pos(1);
     //rspq_block_run(dplObjects);

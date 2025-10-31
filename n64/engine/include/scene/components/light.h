@@ -8,6 +8,7 @@
 #include "assets/assetManager.h"
 #include "lib/matrixManager.h"
 #include "scene/object.h"
+#include "scene/sceneManager.h"
 #include "script/scriptTable.h"
 
 namespace P64::Comp
@@ -52,10 +53,11 @@ namespace P64::Comp
     }
 
     static void update(Object& obj, Light* data) {
+      auto &light = SceneManager::getCurrent().getLighting();
       if (data->type == 0) {
-        t3d_light_set_ambient(data->color);
+        light.addAmbientLight(data->color);
       } else {
-        t3d_light_set_directional(data->index, data->color, data->dir);
+        light.addDirLight(data->color, data->dir);
       }
     }
 

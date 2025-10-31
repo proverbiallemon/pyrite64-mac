@@ -6,6 +6,7 @@
 #include <libdragon.h>
 #include <vector>
 
+#include "lighting.h"
 #include "object.h"
 #include "scene/camera.h"
 
@@ -39,6 +40,8 @@ namespace P64
       // @TODO: avoid vector + fragmented alloc
       std::vector<Object*> objects{};
 
+      Lighting lighting{};
+
       SceneConf conf{};
       uint16_t id;
 
@@ -53,5 +56,6 @@ namespace P64
 
       [[nodiscard]] uint16_t getId() const { return id; }
       [[nodiscard]] Camera& getCamera(uint32_t index = 0) { return cameras[index]; }
+      [[nodiscard]] Lighting& getLighting() { return lighting; }
   };
 }

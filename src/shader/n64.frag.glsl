@@ -197,7 +197,7 @@ void main()
 {
   vec4 cc0[4]; // inputs for 1. cycle
   vec4 cc1[4]; // inputs for 2. cycle
-  vec4 ccValue = vec4(0.0); // result after 1/2 cycle
+  vec4 ccValue = vec4(0.0); // result after 1/2 cycleß
 
   vec4 uvTex = uv;
 
