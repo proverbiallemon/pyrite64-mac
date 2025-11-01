@@ -22,9 +22,10 @@ namespace
   sprite_t *sprite{nullptr};
 }
 
-P64::Scene::Scene(uint16_t sceneId)
+P64::Scene::Scene(uint16_t sceneId, Scene** ref)
   : id{sceneId}
 {
+  if(ref)*ref = this;
   loadScene();
 
   state.screenSize[0] = conf.screenWidth;

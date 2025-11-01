@@ -48,6 +48,7 @@ void Build::buildScene(Project::Project &project, const Project::SceneEntry &sce
     for (auto &comp : obj.components) {
       auto compPos = ctx.fileObj.getPos();
       ctx.fileObj.skip(2);
+      ctx.fileObj.skip(2); // flags (@TODO)
 
       if (comp.id >= 0 && comp.id < Project::Component::TABLE.size()) {
         Project::Component::TABLE[comp.id].funcBuild(obj, comp, ctx);

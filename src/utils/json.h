@@ -65,7 +65,8 @@ namespace Utils::JSON
     return *i;
   }
 
-  inline float readFloat(const simdjson::simdjson_result<simdjson::dom::element> &el, const std::string &key) {
+  template<typename T>
+  inline float readFloat(const simdjson::simdjson_result<T> &el, const std::string &key) {
     auto val = el[key];
     if (val.error() != simdjson::SUCCESS) {
       return 0.0f;
@@ -106,6 +107,19 @@ namespace Utils::JSON
     col.b = arr.at(2).get_double();
     col.a = arr.at(3).get_double();
     return col;
+  }
+
+  template<typename T>
+  inline glm::vec2 readVec2(const simdjson::simdjson_result<T> &el, const std::string &key, const glm::vec3 &def = {}) {
+    auto val = el[key];
+    if (val.error() != simdjson::SUCCESS)return def;
+    auto arr = val.get_array();
+    if (arr.error() != simdjson::SUCCESS)return def;
+
+    return {
+      (float)arr.at(0).get_double(),
+      (float)arr.at(1).get_double(),
+    };
   }
 
   inline glm::vec3 readVec3(const simdjson::simdjson_result<simdjson::dom::element> &el, const std::string &key, const glm::vec3 &def = {}) {

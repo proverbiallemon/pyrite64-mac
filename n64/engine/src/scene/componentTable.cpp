@@ -7,6 +7,7 @@
 #include "scene/components/code.h"
 #include "scene/components/model.h"
 #include "scene/components/light.h"
+#include "scene/components/camera.h"
 
 #define SET_COMP(name) \
   { \
@@ -22,6 +23,7 @@ namespace P64
     SET_COMP(Code),
     SET_COMP(Model),
     SET_COMP(Light),
+    SET_COMP(Camera),
     {}
   };
 }

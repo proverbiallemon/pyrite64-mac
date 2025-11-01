@@ -26,7 +26,8 @@ namespace P64::SceneManager
   void run()
   {
     sceneId = nextSceneId;
-    currScene = new P64::Scene(sceneId);
+    currScene = new P64::Scene(sceneId, &currScene);
+
     while(sceneId == nextSceneId) {
       currScene->update(1.0f / 60.0f);
     }

@@ -67,6 +67,7 @@ namespace Project::Component
   MAKE_COMP(Code)
   MAKE_COMP(Model)
   MAKE_COMP(Light)
+  MAKE_COMP(Camera)
 
   constexpr std::array TABLE{
     CompInfo{
@@ -101,6 +102,18 @@ namespace Project::Component
       .funcSerialize = Light::serialize,
       .funcDeserialize = Light::deserialize,
       .funcBuild = Light::build
+    },
+    CompInfo{
+      .id = 3,
+      .icon = ICON_FA_VIDEO_CAMERA " ",
+      .name = "Camera",
+      .funcInit = Camera::init,
+      .funcUpdate = Camera::update,
+      .funcDraw = Camera::draw,
+      .funcDraw3D = Camera::draw3D,
+      .funcSerialize = Camera::serialize,
+      .funcDeserialize = Camera::deserialize,
+      .funcBuild = Camera::build
     },
   };
 }

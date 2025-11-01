@@ -30,6 +30,19 @@ namespace Utils::JSON
         hasData = true;
       }
 
+      void set(const std::string &key, const glm::ivec2 &vec) {
+        if (hasData)builder.append_comma();
+
+        builder.escape_and_append_with_quotes(key);
+        builder.append_colon();
+        builder.start_array();
+        builder.append(vec.x); builder.append_comma();
+        builder.append(vec.y);
+        builder.end_array();
+
+        hasData = true;
+      }
+
       void set(const std::string &key, const glm::vec3 &vec) {
         if (hasData)builder.append_comma();
 

@@ -48,7 +48,7 @@ namespace P64
       void loadScene();
 
     public:
-      explicit Scene(uint16_t sceneId);
+      explicit Scene(uint16_t sceneId, Scene** ref);
       ~Scene();
 
       void update(float deltaTime);
@@ -56,6 +56,12 @@ namespace P64
 
       [[nodiscard]] uint16_t getId() const { return id; }
       [[nodiscard]] Camera& getCamera(uint32_t index = 0) { return cameras[index]; }
+
+      Camera& addCamera() {
+        cameras.push_back({});
+        return cameras.back();
+      }
+
       [[nodiscard]] Lighting& getLighting() { return lighting; }
   };
 }
