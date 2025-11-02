@@ -80,6 +80,10 @@ void Project::Scene::removeAllObjects() {
 
 bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild)
 {
+  if(uuidObject == uuidTarget) {
+    return true;
+  }
+
   auto objIt = objectsMap.find(uuidObject);
   auto targetIt = objectsMap.find(uuidTarget);
   if (objIt == objectsMap.end() || targetIt == objectsMap.end()) {

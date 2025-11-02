@@ -22,7 +22,7 @@ namespace
 
   DragDropTask dragDropTask{};
 
-  bool DrawDropTarget(uint32_t& dragDropTarget, uint32_t uuid, float thickness = 2.0f, float hitHeight = 6.0f)
+  bool DrawDropTarget(uint32_t& dragDropTarget, uint32_t uuid, float thickness = 2.0f, float hitHeight = 8.0f)
   {
     // Only show when drag-drop is active
     if (!ImGui::IsDragDropActive())
@@ -34,8 +34,10 @@ namespace
     float fullWidth = ImGui::GetContentRegionAvail().x;
 
     // Compute overlay position
-    ImVec2 overlayStart = cursorScreen;
-    overlayStart.y -= hitHeight / 2;
+    ImVec2 overlayStart{
+      cursorScreen.x - 4,
+      cursorScreen.y - (hitHeight / 2) + 3
+    };
     ImVec2 overlayEnd = ImVec2(cursorScreen.x + fullWidth, cursorScreen.y + hitHeight);
 
     // Push a dummy cursor to draw hit zone *without affecting layout*
@@ -78,7 +80,8 @@ namespace
   )
   {
     ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow
-      | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DrawLinesFull;
+      | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DrawLinesFull
+      | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAllColumns;
 
     if (obj.children.empty()) {
       flag |= ImGuiTreeNodeFlags_Leaf;
@@ -93,16 +96,25 @@ namespace
       deleteObj = &obj;
     }
 
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.f, 3.f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 0.f));
+
     auto nameID = obj.name + "##" + std::to_string(obj.uuid);
+/*
+    float iconAreaWidth = ImGui::GetStyle().WindowPadding.x + 2 * 12.0f + ImGui::GetStyle().ItemInnerSpacing.x;
+    float available = ImGui::GetContentRegionAvail().x;
+
+    ImVec2 cursor = ImGui::GetCursorScreenPos();
+    ImVec2 clipEnd = ImVec2(cursor.x + available - iconAreaWidth, cursor.y + 32);
+    ImGui::PushClipRect(cursor, clipEnd, true);
+*/
     bool isOpen = ImGui::TreeNodeEx(nameID.c_str(), flag);
 
-    if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
-      ctx.selObjectUUID = obj.uuid;
-      //ImGui::SetWindowFocus("Object");
-      //ImGui::SetWindowFocus("Graph");
-    }
+    //ImGui::PopClipRect();
+    ImGui::PopStyleVar(2);
+
+    bool nodeIsClicked = ImGui::IsItemClicked(ImGuiMouseButton_Left);
     if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-      ctx.selObjectUUID = obj.uuid;
       ImGui::OpenPopup("NodePopup");
     }
 
@@ -125,27 +137,37 @@ namespace
     {
       float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
       constexpr float buttonSize = 12;
-      // Align right side
+
+      auto oldCursorPos = ImGui::GetCursorPos();
       ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::GetStyle().WindowPadding.x - buttonSize * 2 - spacing);
 
       if(!parentEnabled)ImGui::BeginDisabled();
 
-      // Example: visibility checkbox
       ImGui::PushID(("vis_" + std::to_string(obj.uuid)).c_str());
 
-      ImGui::IconToggle(obj.selectable, ICON_MDI_CURSOR_DEFAULT, ICON_MDI_CURSOR_DEFAULT_OUTLINE);
+      int clicked = 0;
+      clicked |= ImGui::IconToggle(obj.selectable, ICON_MDI_CURSOR_DEFAULT, ICON_MDI_CURSOR_DEFAULT_OUTLINE);
       ImGui::SameLine(0, spacing);
-      ImGui::IconToggle(obj.enabled, ICON_MDI_CHECKBOX_MARKED, ICON_MDI_CHECKBOX_BLANK_OUTLINE);
+      clicked |= ImGui::IconToggle(obj.enabled, ICON_MDI_CHECKBOX_MARKED, ICON_MDI_CHECKBOX_BLANK_OUTLINE);
+
+      if(clicked)nodeIsClicked = false;
 
       ImGui::PopID();
 
       if(!parentEnabled)ImGui::EndDisabled();
+      ImGui::SetCursorPosY(oldCursorPos.y);
     }
 
     if(ImGui::IsDragDropActive()) {
       if(DrawDropTarget(dragDropTask.sourceUUID, obj.uuid)) {
         dragDropTask.targetUUID = obj.uuid;
       }
+    }
+
+    if (nodeIsClicked) {
+      ctx.selObjectUUID = obj.uuid;
+      //ImGui::SetWindowFocus("Object");
+      //ImGui::SetWindowFocus("Graph");
     }
 
     if(isOpen)
@@ -195,7 +217,7 @@ void Editor::SceneGraph::draw()
   auto &root = scene->getRootObject();
   drawObjectNode(*scene, root, keyDelete);
 
-  ImGui::PopStyleVar();
+  ImGui::PopStyleVar(1);
 
   if(dragDropTask.sourceUUID && dragDropTask.targetUUID) {
     //printf("dragDropTarget %08X -> %08X (%d)\n", dragDropTask.sourceUUID, dragDropTask.targetUUID, dragDropTask.isInsert);

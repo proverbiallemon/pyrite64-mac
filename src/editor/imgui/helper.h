@@ -16,14 +16,16 @@ namespace ImGui
 {
   bool IconButton(const char* label, const ImVec4 &color = ImVec4{1,1,1,1});
 
-  inline void IconToggle(bool &state, const char* labelOn, const char* labelOff)
+  inline bool IconToggle(bool &state, const char* labelOn, const char* labelOff)
   {
     if(IconButton(
       state ? labelOn : labelOff,
       state ? ImVec4{1,1,1,1} : ImVec4{0.6f,0.6f,0.6f,1}
     )) {
       state = !state;
+      return true;
     }
+    return false;
   }
 }
 
