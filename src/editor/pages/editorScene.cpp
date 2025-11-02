@@ -109,7 +109,7 @@ void Editor::Scene::draw()
 
   if (ctx.project->getScenes().getLoadedScene()) {
 
-    ImGui::Begin("Graph", nullptr, ImGuiWindowFlags_MenuBar);
+    ImGui::Begin("Graph");
       sceneGraph.draw();
     ImGui::End();
 

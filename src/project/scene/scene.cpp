@@ -78,6 +78,50 @@ void Project::Scene::removeAllObjects() {
   root.children.clear();
 }
 
+bool Project::Scene::moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild)
+{
+  auto objIt = objectsMap.find(uuidObject);
+  auto targetIt = objectsMap.find(uuidTarget);
+  if (objIt == objectsMap.end() || targetIt == objectsMap.end()) {
+    return false;
+  }
+
+  auto obj = objIt->second;
+  auto target = targetIt->second;
+
+  // Remove from current parent
+  if (obj->parent) {
+    std::erase_if(
+      obj->parent->children,
+      [&obj](const std::shared_ptr<Object> &ref) { return ref->uuid == obj->uuid; }
+    );
+  }
+
+  if (asChild) {
+    // Add as child to target
+    target->children.push_back(obj);
+    obj->parent = target.get();
+  } else {
+    // Add as sibling to target
+    auto parent = target->parent;
+    if (parent) {
+      // insert after target
+      auto &siblings = parent->children;
+      auto it = std::find_if(
+        siblings.begin(), siblings.end(),
+        [&target](const std::shared_ptr<Object> &ref) { return ref->uuid == target->uuid; }
+      );
+      if (it != siblings.end())
+      {
+        siblings.insert(it + 1, obj);
+        obj->parent = parent;
+      }
+    }
+  }
+
+  return true;
+}
+
 void Project::Scene::save()
 {
   Utils::FS::saveTextFile(scenePath + "/scene.json", serialize());

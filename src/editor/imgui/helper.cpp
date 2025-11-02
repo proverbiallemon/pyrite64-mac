@@ -18,7 +18,7 @@ bool ImGui::IconButton(const char* label, const ImVec4 &color)
   bool clicked = IsMouseClicked(ImGuiMouseButton_Left) && hovered;
 
   PushStyleColor(ImGuiCol_Text,
-    hovered ? ImVec4(1.0f, 0.5f, 0.0f, 1.0f) : color
+    hovered ? GetStyleColorVec4(ImGuiCol_DragDropTarget) : color
   );
 
   PushStyleColor(ImGuiCol_Button, COLOR_NONE);

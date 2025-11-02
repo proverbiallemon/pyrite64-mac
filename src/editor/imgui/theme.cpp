@@ -10,6 +10,7 @@
 namespace
 {
   constinit ImFont* fontMono{nullptr};
+  constexpr ImVec4 COLOR_HIGHLIGHT{1.0f, 0.5f, 0.0f, 1.0f};
 }
 
 void ImGui::applyTheme()
@@ -44,6 +45,8 @@ void ImGui::applyTheme()
   colors[ImGuiCol_TabSelected] = ImVec4(0.25f, 0.25f, 0.38f, 1.00f);
   colors[ImGuiCol_TabUnfocused] = ImVec4(0.13f, 0.13f, 0.17f, 1.00f);
   colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.20f, 0.20f, 0.25f, 1.00f);
+  colors[ImGuiCol_TabSelectedOverline] = COLOR_HIGHLIGHT;
+  colors[ImGuiCol_DragDropTarget] = COLOR_HIGHLIGHT;
 
   // Title
   colors[ImGuiCol_TitleBg] = ImVec4(0.12f, 0.12f, 0.15f, 1.00f);

@@ -46,6 +46,8 @@ namespace Project
       void removeObject(Object &obj);
       void removeAllObjects();
 
+      bool moveObject(uint32_t uuidObject, uint32_t uuidTarget, bool asChild);
+
       std::shared_ptr<Object> getObjectByUUID(uint32_t uuid) {
         if (objectsMap.contains(uuid)) {
           return objectsMap[uuid];

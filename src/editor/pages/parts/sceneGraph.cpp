@@ -189,21 +189,7 @@ void Editor::SceneGraph::draw()
   dragDropTask = {};
   bool isFocus = ImGui::IsWindowFocused();
 
-  // Menu
-  if(ImGui::BeginMenuBar())
-  {
-    if(ImGui::BeginMenu(ICON_MDI_PLUS_BOX_OUTLINE)) {
-      if(ImGui::MenuItem("Empty")){}
-      if(ImGui::MenuItem("Group")){}
-      ImGui::EndMenu();
-    }
-    ImGui::EndMenuBar();
-  }
-
-  // Graph
-  //style.IndentSpacing
-  ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 18.0f);
-
+  ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 16.0f);
   bool keyDelete = isFocus && (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace));
 
   auto &root = scene->getRootObject();
@@ -212,7 +198,12 @@ void Editor::SceneGraph::draw()
   ImGui::PopStyleVar();
 
   if(dragDropTask.sourceUUID && dragDropTask.targetUUID) {
-    printf("dragDropTarget %08X -> %08X (%d)\n", dragDropTask.sourceUUID, dragDropTask.targetUUID, dragDropTask.isInsert);
+    //printf("dragDropTarget %08X -> %08X (%d)\n", dragDropTask.sourceUUID, dragDropTask.targetUUID, dragDropTask.isInsert);
+    scene->moveObject(
+      dragDropTask.sourceUUID,
+      dragDropTask.targetUUID,
+      dragDropTask.isInsert
+    );
   }
 
   if (deleteObj) {

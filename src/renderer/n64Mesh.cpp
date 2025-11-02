@@ -102,10 +102,12 @@ void Renderer::N64Mesh::draw(SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdB
       if (light.type == 0) {
         uniforms.mat.ambientColor = light.color;
       } else {
-        uniforms.mat.lightDir[lightIdx] = glm::vec4(light.dir, 0.0f);
-        uniforms.mat.lightColor[lightIdx] = light.color;
-        ++lightIdx;
-        if (lightIdx >= 2)break;
+        if (lightIdx < 2)
+        {
+          uniforms.mat.lightDir[lightIdx] = glm::vec4(light.dir, 0.0f);
+          uniforms.mat.lightColor[lightIdx] = light.color;
+          ++lightIdx;
+        }
       }
     }
     uniforms.mat.lightDir[0].w = clip;
