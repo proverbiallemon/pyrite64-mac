@@ -114,12 +114,6 @@ void P64::Scene::update(float deltaTime)
 
   for(auto &obj : pendingObjDelete)
   {
-    auto compRefs = obj->getCompRefs();
-    for (uint32_t i=0; i<obj->compCount; ++i) {
-      const auto &compDef = COMP_TABLE[compRefs[i].type];
-      char* dataPtr = (char*)obj + compRefs[i].offset;
-      compDef.initDel(*obj, dataPtr, nullptr);
-    }
     std::erase(objects, obj);
     obj->~Object();
     free(obj);
@@ -219,7 +213,11 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
   GlobalScript::callHooks(GlobalScript::HookType::SCENE_PRE_DRAW_2D);
 
   Debug::printStart();
-  Debug::printf(16, 16, "FPS: %.2f\n", (double)VI::SwapChain::getFPS());
+  Debug::printf(16, 16, "%.2f\n", (double)VI::SwapChain::getFPS());
+
+  heap_stats_t heap{};
+  sys_get_heap_stats(&heap);
+  Debug::printf(16, 16+9, "%.4f\n", heap.used / 1024.0);
 
   GlobalScript::callHooks(GlobalScript::HookType::SCENE_POST_DRAW_2D);
 

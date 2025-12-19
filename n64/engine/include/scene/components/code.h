@@ -27,7 +27,13 @@ namespace P64::Comp
 
     static void initDelete([[maybe_unused]] Object& obj, Code* data, uint16_t* initData)
     {
-      if (initData == nullptr)return;
+      if (initData == nullptr)
+      {
+        if(data->funcDestroy) {
+          data->funcDestroy(obj, (char*)data + sizeof(Code));
+        }
+        return;
+      }
 
       auto scriptPtr = Script::getCodeByIndex(initData[0]);
       auto dataSize = Script::getCodeSizeByIndex(initData[0]);
@@ -44,8 +50,7 @@ namespace P64::Comp
       }
 
       if(data->funcInit) {
-        char* funcData = (char*)data + sizeof(Code);
-        data->funcInit(obj, funcData);
+        data->funcInit(obj, (char*)data + sizeof(Code));
       }
     }
 

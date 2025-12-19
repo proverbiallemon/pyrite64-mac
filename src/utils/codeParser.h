@@ -13,6 +13,7 @@ namespace Utils::CPP
 {
   struct Field {
     DataType type;
+    uint32_t dataSize;
     std::string name;
     std::unordered_map<std::string, std::string> attr;
     std::string defaultValue;

@@ -196,18 +196,27 @@ void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::S
 
   iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry &comp) {
     auto &def = Project::Component::TABLE[comp.id];
+
+    // @TODO: use flag in component
+    if(!showCollMesh && comp.id == 4)return;
+    if(!showCollObj && comp.id == 5)return;
+
     if(def.funcDraw3D) {
       def.funcDraw3D(obj, comp, *this, cmdBuff, renderPass3D);
     }
-    /*
-    if(child->components.empty()) {
+
+    /*if(child->components.empty()) {
       Utils::Mesh::addSprite(*getSprites(), child->pos, child->uuid, 2);
-    }
-    */
+    }*/
   });
 
   iterateObjects(rootObj, [&](Project::Object &obj, Project::Component::Entry &comp) {
     auto &def = Project::Component::TABLE[comp.id];
+
+    // @TODO: use flag in component
+    if(!showCollMesh && comp.id == 4)return;
+    if(!showCollObj && comp.id == 5)return;
+
     if(def.funcDrawPost3D) {
       def.funcDrawPost3D(obj, comp, *this, cmdBuff, renderPass3D);
     }
@@ -357,9 +366,22 @@ void Editor::Viewport3D::draw()
   }
 
   ImGui::SameLine();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 16);
 
   if(ConnectedToggleButton(ICON_MDI_GRID, showGrid, true, true, ImVec2(32,24))) {
     showGrid = !showGrid;
+  }
+
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4);
+  if(ConnectedToggleButton(ICON_MDI_LANDSLIDE_OUTLINE, showCollMesh, true, true, ImVec2(32,24))) {
+    showCollMesh = !showCollMesh;
+  }
+
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4);
+  if(ConnectedToggleButton(ICON_MDI_CYLINDER, showCollObj, true, true, ImVec2(32,24))) {
+    showCollObj = !showCollObj;
   }
 
   ImGui::SetCursorPosY(currPos.y + BAR_HEIGHT);

@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include "logger.h"
+
 namespace
 {
   constexpr Utils::DataType fromString(const std::string &str)
@@ -21,6 +23,7 @@ namespace
     if (str == "uint32_t") return Utils::DataType::u32;
     if (str == "int32_t") return Utils::DataType::s32;
     if (str == "float") return Utils::DataType::f32;
+    if (str == "char") return Utils::DataType::string;
     if (str == "AssetRef<sprite_t>") return Utils::DataType::ASSET_SPRITE;
     return Utils::DataType::s32;
   }
@@ -109,7 +112,7 @@ Utils::CPP::Struct Utils::CPP::parseDataStruct(const std::string &sourceCode, co
 
     // Regex for attributes + field lines
     std::regex fieldRegex(
-      R"((\[\[\s*([^\]]+)\s*\]\]\s*)?([\w:<>]+)\s+(\w+)(?:\s*\=(.*))?\s*;)"
+      R"((\[\[\s*([^\]]+)\s*\]\]\s*)?([\w:<>]+)\s+(\w+)(\[[0-9]+\])?(?:\s*\=(.*))?\s*;)"
     );
 
     std::smatch fieldMatch;
@@ -117,13 +120,31 @@ Utils::CPP::Struct Utils::CPP::parseDataStruct(const std::string &sourceCode, co
 
     while (std::regex_search(fieldBegin, body.cend(), fieldMatch, fieldRegex))
     {
-     s.fields.push_back({
-      .type = fromString(fieldMatch[3]),
-      .name = fieldMatch[4],
-      .attr = parseAttributes(fieldMatch[2]),
-      .defaultValue = fieldMatch[5],
-     });
-     fieldBegin = fieldMatch.suffix().first;
+      Field field{
+        .type = fromString(fieldMatch[3]),
+        .dataSize = getTypeSize(fromString(fieldMatch[3])),
+        .name = fieldMatch[4],
+        .attr = parseAttributes(fieldMatch[2]),
+        .defaultValue = fieldMatch[6],
+      };
+
+      if(field.type == DataType::string) {
+        try
+        {
+          auto strSize = fieldMatch[5].str(); // -> [42]
+          field.dataSize = std::stoul(strSize.substr(1, strSize.size() - 2)); // parse without brackets
+        } catch(...) {
+          Logger::log(
+            "Failed to parse size for string field: " + field.name + ", defaulting to 4 bytes.",
+            Logger::LEVEL_ERROR
+          );
+          field.dataSize = 4;
+        }
+
+      }
+
+      s.fields.push_back(field);
+      fieldBegin = fieldMatch.suffix().first;
     }
 
     //structs.push_back(std::move(s));
@@ -148,7 +169,7 @@ bool Utils::CPP::hasFunction(const std::string&sourceCode, const std::string&ret
 uint32_t Utils::CPP::calcStructSize(const Struct&s) {
   uint32_t size = 0;
   for(const auto &field : s.fields) {
-    size += getTypeSize(field.type);
+    size += field.dataSize;
   }
   return size;
 }

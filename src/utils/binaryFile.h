@@ -18,7 +18,7 @@ namespace Utils
   enum DataType
   {
     u8, s8, u16, s16, u32, s32,
-    f32,
+    f32, string,
     ASSET_SPRITE
   };
 
@@ -110,6 +110,10 @@ namespace Utils
           case s16: write<int16_t>(std::stol(str)); break;
           case u8: write<uint8_t>(std::stoul(str)); break;
           case s8: write<int8_t>(std::stol(str)); break;
+          case string:
+            for(char c : str)write<uint8_t>(c);
+            write<uint8_t>(0);
+            break;
           default:
             throw std::runtime_error("unsupported data type");
         }

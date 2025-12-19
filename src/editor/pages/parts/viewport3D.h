@@ -41,6 +41,8 @@ namespace Editor
       Renderer::Object objSprites{};
 
       bool showGrid{true};
+      bool showCollMesh{true};
+      bool showCollObj{true};
 
       void onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene);
       void onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass *copyPass);
