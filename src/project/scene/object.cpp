@@ -79,7 +79,7 @@ std::string Project::Object::serialize() {
   return serializeObj(*this).toString();
 }
 
-void Project::Object::deserialize(Scene &scene, const simdjson::simdjson_result<simdjson::dom::element>&doc)
+void Project::Object::deserialize(Scene *scene, const simdjson::simdjson_result<simdjson::dom::element>&doc)
 {
   if(!doc.is_object())return;
 
@@ -125,9 +125,13 @@ void Project::Object::deserialize(Scene &scene, const simdjson::simdjson_result<
   if (chArray.error() != simdjson::SUCCESS)return;
 
   size_t childCount = chArray.size();
+
+  assert(scene || childCount == 0);
+  if(!scene)return;
+
   for (size_t i=0; i<childCount; ++i) {
     auto childObj = std::make_shared<Object>(*this);
     childObj->deserialize(scene, chArray.at(i));
-    scene.addObject(*this, childObj);
+    scene->addObject(*this, childObj);
   }
 }

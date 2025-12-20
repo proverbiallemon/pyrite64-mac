@@ -169,6 +169,8 @@ add_executable(p64editor src/main.cpp
         src/project/component/types/compCollBody.cpp
         src/build/fontBuilder.cpp
         src/utils/prop.h
+        src/project/scene/prefab.h
+        src/project/scene/prefab.cpp
 )
 
 target_include_directories(p64editor PRIVATE

@@ -11,6 +11,7 @@
 #include "../renderer/object.h"
 #include "../utils/codeParser.h"
 #include "../renderer/texture.h"
+#include "scene/prefab.h"
 #include "tiny3d/tools/gltf_importer/src/structs.h"
 
 namespace Project
@@ -65,6 +66,7 @@ namespace Project
         std::shared_ptr<Renderer::Texture> texture{nullptr};
         T3DM::T3DMData t3dmData{};
         std::shared_ptr<Renderer::N64Mesh> mesh3D{};
+        std::shared_ptr<Prefab> prefab{nullptr};
         AssetConf conf{};
         Utils::CPP::Struct params{};
 
@@ -83,10 +85,10 @@ namespace Project
       void reloadEntry(Entry &entry, const std::string &path);
 
     public:
-      std::unordered_map<uint64_t, int> entriesMap{};
+      std::unordered_map<uint64_t, std::pair<int, int>> entriesMap{};
       //std::unordered_map<uint64_t, int> entriesMapScript{};
 
-      AssetManager(Project *pr);
+      explicit AssetManager(Project *pr);
       ~AssetManager();
 
       void reload();
@@ -122,14 +124,11 @@ namespace Project
       }
 
       Entry* getEntryByUUID(uint64_t uuid) {
-        for (auto &typed : entries) {
-          for (auto &entry : typed) {
-            if (entry.uuid == uuid) {
-              return &entry;
-            }
-          }
+        auto it = entriesMap.find(uuid);
+        if (it == entriesMap.end()) {
+          return nullptr;
         }
-        return nullptr;
+        return &entries[it->second.first][it->second.second];
       }
 
       const std::shared_ptr<Renderer::Texture> &getFallbackTexture();

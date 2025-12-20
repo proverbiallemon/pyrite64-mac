@@ -109,6 +109,7 @@ void Project::AssetManager::reloadEntry(Entry &entry, const std::string &path)
 
 void Project::AssetManager::reload() {
   for (auto &e : entries)e.clear();
+  entriesMap.clear();
 
   auto assetPath = fs::path{project->getPath()} / "assets";
   if (!fs::exists(assetPath)) {
@@ -177,7 +178,7 @@ void Project::AssetManager::reload() {
       }
 
       entries[(int)type].push_back(entry);
-      entriesMap[entry.uuid] = static_cast<int>(entries.size() - 1);
+      entriesMap[entry.uuid] = {(int)type, static_cast<int>(entries[(int)type].size() - 1) };
     }
   }
 
@@ -235,7 +236,7 @@ void Project::AssetManager::reload() {
       };
 
       entries[(int)type].push_back(entry);
-      entriesMap[entry.uuid] = static_cast<int>(entries.size() - 1);
+      entriesMap[entry.uuid] = {(int)type, static_cast<int>(entries[(int)type].size() - 1) };
     }
   }
 }

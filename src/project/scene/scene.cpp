@@ -55,7 +55,7 @@ Project::Scene::Scene(int id_, const std::string &projectPath)
 std::shared_ptr<Project::Object> Project::Scene::addObject(std::string &objJson)
 {
   auto obj = std::make_shared<Object>(root);
-  obj->deserialize(*this, Utils::JSON::load(objJson));
+  obj->deserialize(this, Utils::JSON::load(objJson));
   obj->id = nextUUID++;
   obj->name += " ("+std::to_string(obj->id)+")";
   obj->uuid = Utils::Hash::sha256_64bit(obj->name + std::to_string(rand()));
@@ -179,5 +179,5 @@ void Project::Scene::deserialize(const std::string &data)
 
   removeAllObjects();
   auto docGraph = doc["graph"];
-  root.deserialize(*this, docGraph);
+  root.deserialize(this, docGraph);
 }
