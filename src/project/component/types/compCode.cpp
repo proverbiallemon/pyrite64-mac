@@ -16,7 +16,7 @@ namespace Project::Component::Code
   struct Data
   {
     uint64_t scriptUUID{0};
-    std::unordered_map<std::string, std::string> args{};
+    std::unordered_map<std::string, PropString> args{};
   };
 
   std::shared_ptr<void> init(Object &obj) {
@@ -31,7 +31,7 @@ namespace Project::Component::Code
 
     Utils::JSON::Builder builderArgs{};
     for (auto &arg : data.args) {
-      builderArgs.set(arg.first, arg.second);
+      builderArgs.set(arg.second);
     }
     builder.set("args", builderArgs);
 
@@ -44,7 +44,10 @@ namespace Project::Component::Code
     if (!doc["args"].error()) {
       auto argsObj = doc["args"].get_object();
       for (auto field : argsObj) {
-        data->args[std::string{field.key}] = field.value.get_string().value();
+        data->args[std::string{field.key}] = PropString{
+          std::string{field.key},
+          std::string{field.value.get_string().value()}
+        };
       }
     }
     return data;
@@ -69,7 +72,8 @@ namespace Project::Component::Code
     if (!script)return;
 
     for (auto &field : script->params.fields) {
-      auto val = data.args[field.name];
+      auto &prop = data.args[field.name];
+      auto val = prop.resolve();
       if (val.empty())val = field.defaultValue;
       if (val.empty())val = "0";
 
@@ -134,11 +138,11 @@ namespace Project::Component::Code
           {
             ImGui::InpTable::add(name);
             const auto &assets = ctx.project->getAssets().getTypeEntries(AssetManager::FileType::IMAGE);
-            uint64_t uuid = Utils::parseU64(data.args[field.name]);
+            uint64_t uuid = Utils::parseU64(data.args[field.name].value);
             ImGui::VectorComboBox("##arg" + std::to_string(idx), assets, uuid);
-            data.args[field.name] = std::to_string(uuid);
+            data.args[field.name].value = std::to_string(uuid);
           } else {
-            ImGui::InpTable::addString(name, data.args[field.name]);
+            ImGui::InpTable::addString(name, data.args[field.name].value);
           }
           ++idx;
         }

@@ -22,7 +22,7 @@ namespace Project::Component::CollMesh
 {
   struct Data
   {
-    uint64_t modelUUID{0};
+    PROP_U64(modelUUID);
     Renderer::Object obj3D{};
     Utils::AABB aabb{};
   };
@@ -35,13 +35,13 @@ namespace Project::Component::CollMesh
   std::string serialize(Entry &entry) {
     Data &data = *static_cast<Data*>(entry.data.get());
     Utils::JSON::Builder builder{};
-    builder.set("model", data.modelUUID);
+    builder.set(data.modelUUID);
     return builder.toString();
   }
 
   std::shared_ptr<void> deserialize(simdjson::simdjson_result<simdjson::dom::object> &doc) {
     auto data = std::make_shared<Data>();
-    data->modelUUID = doc["model"].get<uint64_t>();
+    Utils::JSON::readProp(doc, data->modelUUID);
     return data;
   }
 
@@ -49,7 +49,7 @@ namespace Project::Component::CollMesh
   {
     Data &data = *static_cast<Data*>(entry.data.get());
 
-    auto res = ctx.assetUUIDToIdx.find(data.modelUUID);
+    auto res = ctx.assetUUIDToIdx.find(data.modelUUID.resolve());
     uint16_t id = 0xDEAD;
     if (res == ctx.assetUUIDToIdx.end()) {
       Utils::Logger::log("Component Model: Model UUID not found: " + std::to_string(entry.uuid), Utils::Logger::LEVEL_ERROR);
@@ -75,7 +75,7 @@ namespace Project::Component::CollMesh
 
       int idx = modelList.size();
       for (int i=0; i<modelList.size(); ++i) {
-        if (modelList[i].uuid == data.modelUUID) {
+        if (modelList[i].uuid == data.modelUUID.resolve()) {
           idx = i;
           break;
         }
@@ -94,7 +94,7 @@ namespace Project::Component::CollMesh
 
       if (idx < modelList.size()) {
         const auto &script = modelList[idx];
-        data.modelUUID = script.uuid;
+        data.modelUUID.value = script.uuid;
       }
 
       ImGui::InpTable::end();
@@ -105,7 +105,7 @@ namespace Project::Component::CollMesh
   {
     Data &data = *static_cast<Data*>(entry.data.get());
     if (!data.obj3D.isMeshLoaded()) {
-      auto asset = ctx.project->getAssets().getEntryByUUID(data.modelUUID);
+      auto asset = ctx.project->getAssets().getEntryByUUID(data.modelUUID.resolve());
       if (asset && asset->mesh3D) {
         if (!asset->mesh3D->isLoaded()) {
           asset->mesh3D->recreate(*ctx.scene);
