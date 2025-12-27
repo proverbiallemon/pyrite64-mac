@@ -69,7 +69,6 @@ void P64::Scene::loadScene() {
     auto *objFileStart = (uint8_t*)(loadSubFile('o'));
 
     auto *objFile = objFileStart;
-    //cameras.resize(camCount);
 
     // now process all other objects
     objFile = objFileStart;
@@ -134,7 +133,7 @@ void P64::Scene::loadScene() {
         uint8_t argSize = ptrIn[1] * 4;
 
         const auto &compDef = COMP_TABLE[compId];
-        //debugf("Alloc: %lu bytes for comp %d (arg: %d)\n", compDef.allocSize, compId, argSize);
+        // debugf("Alloc: comp %d (arg: %d)\n", compId, argSize);
 
         objCompTablePtr->type = compId;
         objCompTablePtr->flags = 0;

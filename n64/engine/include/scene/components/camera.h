@@ -34,6 +34,7 @@ namespace P64::Comp
     {
       if (initData == nullptr) {
         SceneManager::getCurrent().removeCamera(&data->camera);
+        t3d_viewport_destroy(&data->camera.viewports);
         data->~Camera();
         return;
       }

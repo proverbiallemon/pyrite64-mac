@@ -62,9 +62,6 @@ namespace P64
       std::vector<Camera*> cameras{};
       Camera *camMain{nullptr};
 
-      T3DMat4FP *objStaticMats{nullptr};
-      rspq_block_t *dplObjects{nullptr};
-
       RenderPipeline *renderPipeline{nullptr};
 
       // @TODO: avoid vector + fragmented alloc

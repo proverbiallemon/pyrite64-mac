@@ -14,15 +14,18 @@ namespace P64::Comp
 {
   void CollMesh::initDelete([[maybe_unused]] Object& obj, CollMesh* data, uint16_t* initData)
   {
+    auto &scene = SceneManager::getCurrent();
     if (initData == nullptr) {
+      if(data->meshInstance.mesh) {
+        scene.getCollision().unregisterMesh(&data->meshInstance);
+      }
+
       data->~CollMesh();
       return;
     }
 
     uint16_t assetIdx = initData[0];
     new(data) CollMesh();
-
-    auto &scene = SceneManager::getCurrent();
 
     auto asset = (T3DModel*)AssetManager::getByIndex(assetIdx);
     auto it = t3d_model_iter_create(asset, (T3DModelChunkType)'0');

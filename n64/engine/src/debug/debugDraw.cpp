@@ -53,8 +53,7 @@ void Debug::init() {
 }
 
 void Debug::destroy() {
-  lines.clear();
-  lines.shrink_to_fit();
+  lines = {};
   sprite_free(font);
 }
 

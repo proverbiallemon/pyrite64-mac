@@ -60,6 +60,7 @@ P64::RenderPipelineHDRBloom::~RenderPipelineHDRBloom()
   }
 
   RspHDR::destroy();
+  Mem::freeDepthBuffer();
 }
 
 void P64::RenderPipelineHDRBloom::preDraw()

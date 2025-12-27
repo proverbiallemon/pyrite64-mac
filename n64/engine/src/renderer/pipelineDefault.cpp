@@ -46,6 +46,7 @@ P64::RenderPipelineDefault::~RenderPipelineDefault()
   for(auto &fb : surfFbColor) {
     if(fb.buffer)surface_free(&fb);
   }
+  Mem::freeDepthBuffer();
 }
 
 void P64::RenderPipelineDefault::preDraw()

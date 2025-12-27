@@ -66,9 +66,6 @@ P64::Scene::~Scene()
 {
   rspq_wait();
 
-  if (dplObjects)rspq_block_free(dplObjects);
-  if(objStaticMats)free(objStaticMats);
-
   for(auto obj : objects) {
     obj->~Object();
     free(obj);
@@ -93,7 +90,7 @@ void P64::Scene::update(float deltaTime)
 
   lighting.reset();
 
-  camMain = cameras[0];
+  camMain = cameras.empty() ? nullptr : cameras[0];
   //debugf("cam %p: %d | %f\n", camMain, cameras.size(), (double)camMain->pos.z);
 
   collScene.update(deltaTime);

@@ -59,6 +59,7 @@ namespace P64::AudioManager
   void destroy() {
     stopAll();
     mixer_close();
+    audio_close();
   }
 
   Audio::Handle play2D(wav64_t *audio) {
