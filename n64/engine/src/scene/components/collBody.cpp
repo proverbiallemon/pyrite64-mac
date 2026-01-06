@@ -35,13 +35,13 @@ namespace P64::Comp
 
     new(data) CollBody();
 
-    data->offset = initData->offset;
     data->orgScale = initData->halfExtend;
 
     data->bcs = {
-      .center = obj.pos + data->offset,
+      .center = obj.pos + initData->offset,
       .halfExtend = data->orgScale * obj.scale,
-      .objectId = obj.id,
+      .parentOffset = initData->offset,
+      .obj = &obj,
       .maskRead = initData->maskRead,
       .maskWrite = initData->maskWrite,
       .flags = initData->flags,

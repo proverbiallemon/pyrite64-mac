@@ -24,6 +24,14 @@ namespace {
   constexpr bool isFloor(float normY) {
     return normY > FLOOR_ANGLE;
   }
+
+  fm_vec3_t intoLocalSpace(const Coll::MeshInstance &inst, const fm_vec3_t &p) {
+    auto res = (p - inst.object->pos);
+    return inst.invRot * res * inst.invScale;
+  }
+  fm_vec3_t outOfLocalSpace(const Coll::MeshInstance &inst, const fm_vec3_t &p) {
+    return inst.object->rot * (p * inst.object->scale) + inst.object->pos;
+  }
 }
 
 Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const fm_vec3_t &velocity, float deltaTime) {
@@ -50,8 +58,8 @@ Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const fm_vec3_t &velocity, float del
       auto &mesh = *meshInst->mesh;
 
       auto bcsLocal = bcs;
-      bcsLocal.center = meshInst->intoLocalSpace(bcs.center);
-      bcsLocal.halfExtend /= meshInst->scale;
+      bcsLocal.center = intoLocalSpace(*meshInst, bcs.center);
+      bcsLocal.halfExtend *= meshInst->invScale;
 
       auto ticksBvhStart = get_ticks();
       bvhRes.reset();
@@ -104,7 +112,7 @@ Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const fm_vec3_t &velocity, float del
         }
       } // BVH res
 
-      bcs.center = meshInst->outOfLocalSpace(bcsLocal.center);
+      bcs.center = outOfLocalSpace(*meshInst, bcsLocal.center);
     } // meshes
   } // steps
 
@@ -115,6 +123,15 @@ Coll::CollInfo Coll::Scene::vsBCS(BCS &bcs, const fm_vec3_t &velocity, float del
 void Coll::Scene::update(float deltaTime)
 {
   auto &gameScene = P64::SceneManager::getCurrent();
+
+  for(auto &inst : meshes) {
+    inst->invScale = fm_vec3_t{
+      1.0f / inst->object->scale.x,
+      1.0f / inst->object->scale.y,
+      1.0f / inst->object->scale.z,
+    };
+    fm_quat_inverse(&inst->invRot, &inst->object->rot);
+  }
 
   for(auto sp : collBCS) {
     sp->hitTriTypes = 0;
@@ -175,6 +192,8 @@ void Coll::Scene::update(float deltaTime)
         gameScene.onObjectCollision({bcsA, bcsB});
       }
     }
+
+    bcsA->obj->pos = bcsA->center - bcsA->parentOffset;
   }
 }
 
@@ -189,7 +208,7 @@ Coll::RaycastRes Coll::Scene::raycastFloor(const fm_vec3_t &pos) {
   for(auto meshInst : meshes)
   {
     auto &mesh = *meshInst->mesh;
-    auto posLocal = meshInst->intoLocalSpace(pos);
+    auto posLocal = intoLocalSpace(*meshInst, pos);
 
     Coll::IVec3 posInt = {
       .v = {
@@ -225,7 +244,7 @@ Coll::RaycastRes Coll::Scene::raycastFloor(const fm_vec3_t &pos) {
       auto collInfo = mesh.vsFloorRay(posLocal, tri);
       if(collInfo.hasResult() && collInfo.hitPos.v[1] > highestFloor)
       {
-        res.hitPos = meshInst->outOfLocalSpace(collInfo.hitPos);
+        res.hitPos = outOfLocalSpace(*meshInst, collInfo.hitPos);
         res.normal = collInfo.normal;
         highestFloor = collInfo.hitPos.v[1];
       }
@@ -261,16 +280,9 @@ void Coll::Scene::debugDraw(bool showMesh, bool showSpheres)
         int idxA = mesh.indices[t*3];
         int idxB = mesh.indices[t*3+1];
         int idxC = mesh.indices[t*3+2];
-        auto v0 = (mesh.verts[idxA] + meshInst->pos);
-        auto v1 = (mesh.verts[idxB] + meshInst->pos);
-        auto v2 = (mesh.verts[idxC] + meshInst->pos);
-
-        v0 *= meshInst->scale;
-        v1 *= meshInst->scale;
-        v2 *= meshInst->scale;
-        v0 += meshInst->pos;
-        v1 += meshInst->pos;
-        v2 += meshInst->pos;
+        auto v0 = (mesh.verts[idxA] * meshInst->object->scale + meshInst->object->pos);
+        auto v1 = (mesh.verts[idxB] * meshInst->object->scale + meshInst->object->pos);
+        auto v2 = (mesh.verts[idxC] * meshInst->object->scale + meshInst->object->pos);
 
         if(mesh.normals[t].v[2] < 0)continue;
         auto color = isFloor(mesh.normals[t])

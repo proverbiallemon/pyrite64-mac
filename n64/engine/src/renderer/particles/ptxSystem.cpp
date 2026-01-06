@@ -10,7 +10,9 @@ P64::PTX::System::System(Type ptxType, uint32_t maxSize)
 {
   assert(sizeof(countMax) % 2 == 0);
   if(countMax > 0) {
-    particles = malloc_uncached(countMax * sizeof(TPXParticle) / 2);
+    std::size_t allocSize = countMax * sizeof(TPXParticle) / 2;
+    particles = malloc_uncached(allocSize);
+    sys_hw_memset(particles, 0, allocSize);
   }
 }
 

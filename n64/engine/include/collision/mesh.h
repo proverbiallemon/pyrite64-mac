@@ -7,6 +7,11 @@
 #include <string>
 #include "shapes.h"
 
+namespace P64
+{
+  class Object;
+}
+
 namespace Coll
 {
   struct BVH;
@@ -33,15 +38,9 @@ namespace Coll
 
   struct MeshInstance {
     Mesh *mesh{};
-    fm_vec3_t pos{0.0f, 0.0f, 0.0f};
-    fm_vec3_t scale{1.0f, 1.0f, 1.0f};
-    fm_quat_t rot{0.0f, 0.0f, 0.0f, 1.0f};
+    P64::Object* object{};
 
-    fm_vec3_t intoLocalSpace(const fm_vec3_t &p) const {
-      return (p / scale) - pos;
-    }
-    fm_vec3_t outOfLocalSpace(const fm_vec3_t &p) const {
-      return (p + pos) * scale;
-    }
+    fm_vec3_t invScale{};
+    fm_quat_t invRot{};
   };
 }

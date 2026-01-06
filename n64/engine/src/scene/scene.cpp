@@ -107,8 +107,6 @@ void P64::Scene::update(float deltaTime)
   }
   objectsToAdd.clear();
 
-  collScene.update(deltaTime);
-
   GlobalScript::callHooks(GlobalScript::HookType::SCENE_UPDATE);
 
   for(auto obj : objects)
@@ -123,6 +121,8 @@ void P64::Scene::update(float deltaTime)
       compDef.update(*obj, dataPtr, deltaTime);
     }
   }
+
+  collScene.update(deltaTime);
 
   for(auto &cam : cameras) {
     cam->update(deltaTime);
@@ -231,8 +231,8 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
 
 void P64::Scene::onObjectCollision(const Coll::CollEvent &event)
 {
-  auto objA = getObjectById(event.self->objectId);
-  auto objB = getObjectById(event.other->objectId);
+  auto objA = event.self->obj;
+  auto objB = event.other->obj;
   if(!objA || !objB)return;
 
   auto compRefsA = objA->getCompRefs();

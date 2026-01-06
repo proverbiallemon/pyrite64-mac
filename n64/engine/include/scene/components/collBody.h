@@ -17,7 +17,6 @@ namespace P64::Comp
     static constexpr uint32_t ID = 5;
 
     Coll::BCS bcs{};
-    fm_vec3_t offset{};
     fm_vec3_t orgScale{};
 
     static uint32_t getAllocSize([[maybe_unused]] uint16_t* initData)
@@ -31,8 +30,6 @@ namespace P64::Comp
 
     static void update(Object& obj, CollBody* data, float deltaTime)
     {
-      // @TODO: only update on changes
-      obj.pos = data->bcs.center - data->offset;
       data->bcs.halfExtend = data->orgScale * obj.scale;
     }
   };

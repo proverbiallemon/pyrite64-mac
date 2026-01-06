@@ -26,12 +26,12 @@ namespace P64::Comp
 
     uint16_t assetIdx = initData[0];
     new(data) CollMesh();
-
+    //debugf("Mesh: %d | id: %d\n", assetIdx, obj.id);
     auto asset = (T3DModel*)AssetManager::getByIndex(assetIdx);
     auto it = t3d_model_iter_create(asset, (T3DModelChunkType)'0');
     if(t3d_model_iter_next(&it)) {
-      data->meshInstance.pos = obj.pos;
-      data->meshInstance.scale = obj.scale;
+      data->meshInstance.object = &obj;
+      // @TODO: reuse mesh
       data->meshInstance.mesh = Coll::Mesh::load(it.chunk);
       obj.getScene().getCollision().registerMesh(&data->meshInstance);
     }
@@ -45,5 +45,9 @@ namespace P64::Comp
     if(event.type == EVENT_TYPE_ENABLE) {
       obj.getScene().getCollision().registerMesh(&data->meshInstance);
     }
+  }
+
+  void CollMesh::update(Object &obj, CollMesh* data, float deltaTime)
+  {
   }
 }

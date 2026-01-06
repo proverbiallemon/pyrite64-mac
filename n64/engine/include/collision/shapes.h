@@ -8,6 +8,11 @@
 #include "lib/math.h"
 #include "flags.h"
 
+namespace P64
+{
+  class Object;
+}
+
 namespace Coll
 {
   struct BCS;
@@ -28,12 +33,12 @@ namespace Coll
 
   struct BCS
   {
-    fm_vec3_t center{};
-    fm_vec3_t halfExtend{};
-    fm_vec3_t velocity{};
+    fm_vec3_t center{}; // center of shape
+    fm_vec3_t halfExtend{}; // half extend from center, spheres only use X
+    fm_vec3_t velocity{}; // current velocity (will be mul. by delta-time internally)
+    fm_vec3_t parentOffset{}; // offset to apply when updating the object it's attached to
 
-    uint16_t objectId{0};
-    uint16_t _padding{};
+    P64::Object *obj{};
 
     uint8_t maskRead{0};
     uint8_t maskWrite{0};

@@ -82,4 +82,8 @@ add_executable(n64_engine
         engine/src/renderer/particles/ptxSystem.cpp
         engine/src/renderer/particles/ptxSprites.cpp
         engine/src/collision/resolver.cpp
+        engine/src/collision/mesh.cpp
+        engine/src/collision/meshLoader.cpp
+        engine/src/lib/math.cpp
+        engine/src/debug/overlay.cpp
 )
