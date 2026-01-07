@@ -36,6 +36,7 @@ namespace P64::Comp
 
     data->volume = (float)initData->volume * (1.0f / 0xFFFF);
     data->flags = initData->flags;
+    wav64_set_loop(data->audio, (data->flags & FLAG_LOOP) != 0);
 
     if(data->flags & FLAG_AUTO_PLAY) {
       data->handle = AudioManager::play2D(data->audio);
