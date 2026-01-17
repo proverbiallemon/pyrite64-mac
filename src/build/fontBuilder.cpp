@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 bool Build::buildFontAssets(Project::Project &project, SceneCtx &sceneCtx)
 {
   fs::path mkFont = fs::path{project.conf.pathN64Inst} / "bin" / "mkfont";
-  auto &fonts = sceneCtx.project->getAssets().getTypeEntries(Project::AssetManager::FileType::FONT);
+  auto &fonts = sceneCtx.project->getAssets().getTypeEntries(Project::FileType::FONT);
   for (auto &font : fonts)
   {
     auto projectPath = fs::path{project.getPath()};

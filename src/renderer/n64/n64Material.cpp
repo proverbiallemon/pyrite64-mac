@@ -40,6 +40,10 @@ void Renderer::N64Material::convert(N64Mesh::MeshPart &part, const T3DM::Materia
   part.material.otherModeL = t3dMat.otherModeValue & 0xFFFFFFFF;
   part.material.flags = t3dMat.drawFlags;
 
+  part.material.flags |= t3dMat.setBlendColor ? UniformN64Material::FLAG_SET_BLEND_COL : 0;
+  part.material.flags |= t3dMat.setEnvColor ? UniformN64Material::FLAG_SET_ENV_COL : 0;
+  part.material.flags |= t3dMat.setPrimColor ? UniformN64Material::FLAG_SET_PRIM_COL : 0;
+
   if (cc & RDPQ_COMBINER_2PASS) {
     part.material.otherModeH |= G_CYC_2CYCLE;
   }

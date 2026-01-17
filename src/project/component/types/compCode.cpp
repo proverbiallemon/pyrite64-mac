@@ -86,7 +86,7 @@ namespace Project::Component::Code
 
   const char* getter(void* user_data, int idx)
   {
-    auto &scriptList = ctx.project->getAssets().getTypeEntries(AssetManager::FileType::CODE_OBJ);
+    auto &scriptList = ctx.project->getAssets().getTypeEntries(FileType::CODE_OBJ);
     if (idx < 0 || idx >= (int)scriptList.size())return "<Select Script>";
     return scriptList[idx].name.c_str();
   }
@@ -96,7 +96,7 @@ namespace Project::Component::Code
     Data &data = *static_cast<Data*>(entry.data.get());
 
     auto &assets = ctx.project->getAssets();
-    auto &scriptList = assets.getTypeEntries(AssetManager::FileType::CODE_OBJ);
+    auto &scriptList = assets.getTypeEntries(FileType::CODE_OBJ);
 
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
@@ -126,7 +126,7 @@ namespace Project::Component::Code
 
           if(field.type == Utils::DataType::ASSET_SPRITE)
           {
-            const auto &assets = ctx.project->getAssets().getTypeEntries(AssetManager::FileType::IMAGE);
+            const auto &assets = ctx.project->getAssets().getTypeEntries(FileType::IMAGE);
             uint64_t uuid = Utils::parseU64(data.args[field.name].value);
             ImTable::addVecComboBox(name, assets, uuid);
             data.args[field.name].value = std::to_string(uuid);

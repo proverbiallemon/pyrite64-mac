@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 bool Build::buildAudioAssets(Project::Project &project, SceneCtx &sceneCtx)
 {
   fs::path mkAudio = fs::path{project.conf.pathN64Inst} / "bin" / "audioconv64";
-  auto &assets = sceneCtx.project->getAssets().getTypeEntries(Project::AssetManager::FileType::AUDIO);
+  auto &assets = sceneCtx.project->getAssets().getTypeEntries(Project::FileType::AUDIO);
   for (auto &asset : assets)
   {
     if(asset.conf.exclude)continue;

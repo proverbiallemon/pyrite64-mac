@@ -9,7 +9,7 @@
 #include "../../../context.h"
 #include "../../../utils/textureFormats.h"
 
-using FileType = Project::AssetManager::FileType;
+using FileType = Project::FileType;
 
 int Selecteditem  = 0;
 

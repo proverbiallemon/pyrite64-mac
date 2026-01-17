@@ -37,7 +37,11 @@ namespace Renderer
       void fromT3DM(const T3DM::T3DMData &t3dmData, Project::AssetManager &assetManager);
 
       void recreate(Renderer::Scene &sc);
-      void draw(SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms);
+      void draw(
+        SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms,
+        const std::vector<uint32_t> &partsIndices,
+        const UniformsOverrides& overrides = {}
+      );
 
       const Utils::AABB& getAABB() const { return mesh.getAABB(); }
       bool isLoaded() const { return loaded; }

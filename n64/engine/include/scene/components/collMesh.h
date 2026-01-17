@@ -15,11 +15,9 @@ namespace P64::Comp
     static constexpr uint32_t ID = 4;
 
     Coll::MeshInstance meshInstance{};
+    uint8_t flags;
 
-    static uint32_t getAllocSize([[maybe_unused]] uint16_t* initData)
-    {
-      return sizeof(CollMesh);
-    }
+    static uint32_t getAllocSize([[maybe_unused]] uint16_t* initData);
 
     static void initDelete([[maybe_unused]] Object& obj, CollMesh* data, uint16_t* initData);
 

@@ -7,7 +7,11 @@
 
 #include "glm/ext/matrix_transform.hpp"
 
-void Renderer::Object::draw(SDL_GPURenderPass* pass, SDL_GPUCommandBuffer* cmdBuff) {
+void Renderer::Object::draw(
+  SDL_GPURenderPass* pass,
+  SDL_GPUCommandBuffer* cmdBuff,
+  const std::vector<uint32_t> &parts
+) {
   if (!mesh && !n64Mesh) return;
 
   if (transformDirty) {
@@ -23,6 +27,6 @@ void Renderer::Object::draw(SDL_GPURenderPass* pass, SDL_GPUCommandBuffer* cmdBu
     mesh->draw(pass);
   }
   if(n64Mesh) {
-    n64Mesh->draw(pass, cmdBuff, uniform);
+    n64Mesh->draw(pass, cmdBuff, uniform, parts, overrides);
   }
 }

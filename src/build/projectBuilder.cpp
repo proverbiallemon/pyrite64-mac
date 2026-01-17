@@ -14,7 +14,19 @@
 
 namespace fs = std::filesystem;
 
-using AT = Project::AssetManager::FileType;
+using AT = Project::FileType;
+
+void Build::SceneCtx::addAsset(const Project::AssetManagerEntry &entry)
+{
+  assetUUIDToIdx[entry.uuid] = assetList.size();
+  if(entry.romPath.size() > 5) {
+    auto outNameNoPrefix = entry.romPath.substr(5); // remove "rom:/"
+    assetFileMap += "if(path == \"" + outNameNoPrefix + "\")return " + std::to_string(assetList.size()) + ";\n";
+  }
+
+  assetList.push_back({entry.romPath, stringOffset, ((uint32_t)entry.type) << 24});
+  stringOffset += entry.romPath.size() + 1;
+}
 
 bool Build::buildProject(const std::string &path)
 {
@@ -42,56 +54,12 @@ bool Build::buildProject(const std::string &path)
   sceneCtx.files.push_back("filesystem/p64/conf");
 
   // Asset-Manager
-  {
-    struct Entry
-    {
-      std::string path{};
-      uint32_t stringOffset{};
-      uint32_t type{};
-    };
 
-    std::vector<Entry> assetList{};
-    std::string assetFileMap = "";
-
-    uint32_t stringOffset{0};
-    uint32_t assetCount = 0;
-    for (auto &typed : project.getAssets().getEntries()) {
-      for (auto &entry : typed) {
-        if (entry.conf.exclude || entry.type == Project::AssetManager::FileType::UNKNOWN) continue;
-        sceneCtx.assetUUIDToIdx[entry.uuid] = assetList.size();
-
-        if(entry.romPath.size() > 5) {
-          auto outNameNoPrefix = entry.romPath.substr(5); // remove "rom:/"
-          assetFileMap += "if(path == \"" + outNameNoPrefix + "\")return " + std::to_string(assetList.size()) + ";\n";
-        }
-
-        assetList.push_back({
-          entry.romPath,
-          stringOffset,
-          ((uint32_t)entry.type) << 24
-        });
-
-        stringOffset += entry.romPath.size() + 1;
-        ++assetCount;
-      }
+  for (auto &typed : project.getAssets().getEntries()) {
+    for (auto &entry : typed) {
+      if (entry.conf.exclude || entry.type == Project::FileType::UNKNOWN) continue;
+      sceneCtx.addAsset(entry);
     }
-    auto assetTableCode = Utils::replaceAll(
-      Utils::FS::loadTextFile("data/scripts/assetTable.h"),
-      "{{ASSET_MAP}}", assetFileMap
-    );
-    Utils::FS::saveTextFile(project.getPath() + "/src/p64/assetTable.h", assetTableCode);
-
-    Utils::BinaryFile fileList{};
-    fileList.write<uint32_t>(assetCount);
-    uint32_t baseOffset = (assetCount * sizeof(uint32_t)*2) + sizeof(uint32_t);
-    for (auto &entry : assetList) {
-      fileList.write(baseOffset + entry.stringOffset);
-      fileList.write(entry.type);
-    }
-    for (auto &entry : assetList) {
-      fileList.writeChars(entry.path.c_str(), entry.path.size()+1);
-    }
-    fileList.writeToFile(fsDataPath / "a");
   }
 
   // User scripts
@@ -137,6 +105,25 @@ bool Build::buildProject(const std::string &path)
     Utils::Logger::log("Prefab Asset build failed!", Utils::Logger::LEVEL_ERROR);
     return false;
   }
+
+  auto assetTableCode = Utils::replaceAll(
+    Utils::FS::loadTextFile("data/scripts/assetTable.h"),
+    "{{ASSET_MAP}}", sceneCtx.assetFileMap
+  );
+  Utils::FS::saveTextFile(project.getPath() + "/src/p64/assetTable.h", assetTableCode);
+
+  // Asset table
+  Utils::BinaryFile fileList{};
+  fileList.write<uint32_t>(sceneCtx.assetList.size());
+  uint32_t baseOffset = (sceneCtx.assetList.size() * sizeof(uint32_t)*2) + sizeof(uint32_t);
+  for (auto &entry : sceneCtx.assetList) {
+    fileList.write(baseOffset + entry.stringOffset);
+    fileList.write(entry.type);
+  }
+  for (auto &entry : sceneCtx.assetList) {
+    fileList.writeChars(entry.path.c_str(), entry.path.size()+1);
+  }
+  fileList.writeToFile(fsDataPath / "a");
 
   // Makefile
   auto makefile = Utils::replaceAll(
@@ -184,7 +171,7 @@ bool Build::buildProject(const std::string &path)
 }
 
 
-bool Build::assetBuildNeeded(const Project::AssetManager::Entry &asset, const std::string &outPath)
+bool Build::assetBuildNeeded(const Project::AssetManagerEntry &asset, const std::string &outPath)
 {
   auto ageSrc = Utils::FS::getFileAge(asset.path);
   auto ageDst = Utils::FS::getFileAge(outPath);

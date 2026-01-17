@@ -19,6 +19,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/matrix_decompose.hpp"
 
+#include "../shared/meshFilter.h"
+
 namespace Project::Component::Model
 {
   struct Data
@@ -26,6 +28,9 @@ namespace Project::Component::Model
     PROP_U64(model);
     PROP_S32(layerIdx);
     PROP_BOOL(culling);
+
+    Shared::MeshFilter filter{};
+
     Shared::Material material{};
 
     Renderer::Object obj3D{};
@@ -43,6 +48,7 @@ namespace Project::Component::Model
       .set(data.model)
       .set(data.layerIdx)
       .set(data.culling)
+      .set(data.filter.meshFilter)
       .set("material", data.material.serialize())
       .doc;
   }
@@ -52,6 +58,7 @@ namespace Project::Component::Model
     Utils::JSON::readProp(doc, data->layerIdx);
     Utils::JSON::readProp(doc, data->model);
     Utils::JSON::readProp(doc, data->culling, false);
+    Utils::JSON::readProp(doc, data->filter.meshFilter);
 
     data->material.deserialize(
       doc.value("material", nlohmann::json::object())
@@ -71,10 +78,19 @@ namespace Project::Component::Model
       id = res->second;
     }
 
+    auto t3dm = ctx.project->getAssets().getEntryByUUID(data.model.value);
+    assert(t3dm);
+    auto &meshes = data.filter.filterT3DM(t3dm->t3dmData.models, obj, true);
+
     ctx.fileObj.write<uint16_t>(id);
     ctx.fileObj.write<uint8_t>(data.layerIdx.resolve(obj));
     ctx.fileObj.write<uint8_t>(data.culling.resolve(obj));
     data.material.build(ctx.fileObj, obj);
+
+    ctx.fileObj.write<uint8_t>(meshes.size());
+    for(auto meshIdx : meshes) {
+      ctx.fileObj.write<uint8_t>(meshIdx);
+    }
   }
 
   void draw(Object &obj, Entry &entry)
@@ -82,7 +98,7 @@ namespace Project::Component::Model
     Data &data = *static_cast<Data*>(entry.data.get());
 
     auto &assets = ctx.project->getAssets();
-    auto &modelList = assets.getTypeEntries(AssetManager::FileType::MODEL_3D);
+    auto &modelList = assets.getTypeEntries(FileType::MODEL_3D);
     auto scene = ctx.project->getScenes().getLoadedScene();
 
     if (ImTable::start("Comp", &obj)) {
@@ -111,18 +127,29 @@ namespace Project::Component::Model
 
       ImTable::end();
 
-      // disable background
-      ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
-      ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
-      ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
-      ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImGui::GetStyle().ItemSpacing + ImVec2{0, -4});
+      if(ImGui::CollapsingSubHeader("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Filter", &obj))
+      {
+        bool changed = ImTable::addObjProp("Filter", data.filter.meshFilter);
 
-      auto isOpen = ImGui::CollapsingHeader("Material Settings", ImGuiTreeNodeFlags_DefaultOpen);
+        auto t3dm = ctx.project->getAssets().getEntryByUUID(data.model.value);
+        if(t3dm)
+        {
+          if(changed || data.filter.cache.empty()) {
+            data.filter.filterT3DM(t3dm->t3dmData.models, obj, true);
+          }
 
-      ImGui::PopStyleColor(3);
-      ImGui::PopStyleVar(1);
+          for(auto idx : data.filter.cache) {
+            ImGui::Text("%s@%s",
+              t3dm->t3dmData.models[idx].name.c_str(),
+              t3dm->t3dmData.models[idx].material.name.c_str()
+            );
+          }
+        }
 
-      if(isOpen && ImTable::start("Mat", &obj, 2))
+        ImTable::end();
+      }
+
+      if(ImGui::CollapsingSubHeader("Material Sets", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Mat", &obj))
       {
         ImTable::addObjProp<int32_t>("Depth", data.material.depth, [](int32_t *depth)
         {
@@ -132,10 +159,12 @@ namespace Project::Component::Model
 
         ImTable::addObjProp("Prim-Color", data.material.prim, &data.material.setPrim);
         ImTable::addObjProp("Env-Color", data.material.env, &data.material.setEnv);
-        ImTable::addObjProp("Lighting", data.material.lighting, &data.material.setLighting);
+        // ImTable::addObjProp("Lighting", data.material.lighting, &data.material.setLighting);
 
         ImTable::end();
       }
+
+      ImGui::Dummy({0,4});
 
     }
   }
@@ -160,6 +189,17 @@ namespace Project::Component::Model
       if(data.layerIdx.value == 0)data.obj3D.uniform.mat.flags |= T3D_FLAG_NO_LIGHT;
     }
 
+
+    data.obj3D.overrides.setPrim = data.material.setPrim.resolve(obj.propOverrides);
+    data.obj3D.overrides.setEnv = data.material.setEnv.resolve(obj.propOverrides);
+
+    if(data.obj3D.overrides.setPrim) {
+      data.obj3D.overrides.colPrim = data.material.prim.resolve(obj.propOverrides);
+    }
+    if(data.obj3D.overrides.setEnv) {
+      data.obj3D.overrides.colEnv = data.material.env.resolve(obj.propOverrides);
+    }
+
     data.obj3D.setObjectID(obj.uuid);
 
     // @TODO: tidy-up
@@ -171,7 +211,9 @@ namespace Project::Component::Model
       obj.pos.resolve(obj.propOverrides),
       skew, persp);
 
-    data.obj3D.draw(pass, cmdBuff);
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.model.value);
+    auto &meshes = data.filter.filterT3DM(asset->t3dmData.models, obj, true);
+    data.obj3D.draw(pass, cmdBuff, meshes);
 
     bool isSelected = ctx.selObjectUUID == obj.uuid;
     if (isSelected)

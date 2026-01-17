@@ -13,6 +13,12 @@
 namespace fs = std::filesystem;
 extern SDL_GPUSampler *texSamplerRepeat; // @TODO make sampler manager? is this even needed?
 
+namespace
+{
+  constinit glm::vec4 lastPrim{};
+  constinit glm::vec4 lastEnv{};
+}
+
 void Renderer::N64Mesh::fromT3DM(const T3DM::T3DMData &t3dmData, Project::AssetManager &assetManager)
 {
   loaded = false;
@@ -93,11 +99,15 @@ void Renderer::N64Mesh::recreate(Renderer::Scene &sc) {
   loaded = true;
 }
 
-void Renderer::N64Mesh::draw(SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms)
+void Renderer::N64Mesh::draw(
+  SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdBuff, UniformsObject &uniforms,
+  const std::vector<uint32_t> &partsIndices,
+  const UniformsOverrides& overrides
+)
 {
   if (!scene)return;
 
-  for (auto &part : parts)
+  auto drawPart = [&](MeshPart &part)
   {
     if(part.refTex1.expired() || part.refTex0.expired()) {
       loaded = false;
@@ -105,7 +115,23 @@ void Renderer::N64Mesh::draw(SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdB
     }
 
     uint32_t flags = uniforms.mat.flags;
+
+    if(part.material.flags & UniformN64Material::FLAG_SET_PRIM_COL) {
+      lastPrim = part.material.colPrim;
+    } else {
+      if(overrides.setPrim)lastPrim = overrides.colPrim;
+    }
+
+    if(part.material.flags & UniformN64Material::FLAG_SET_ENV_COL) {
+      lastEnv = part.material.colEnv;
+    } else {
+      if(overrides.setEnv)lastEnv = overrides.colEnv;
+    }
+
     uniforms.mat = part.material;
+    uniforms.mat.colPrim = lastPrim;
+    uniforms.mat.colEnv = lastEnv;
+
     uniforms.mat.flags |= flags;
 
     // @TODO: move out
@@ -133,6 +159,19 @@ void Renderer::N64Mesh::draw(SDL_GPURenderPass* pass, SDL_GPUCommandBuffer *cmdB
     SDL_PushGPUFragmentUniformData(cmdBuff, 0, &uniforms, sizeof(uniforms));
 
     mesh.draw(pass, part.indicesOffset, part.indicesCount);
+  };
+
+  if(partsIndices.empty())
+  {
+    for (auto &part : parts) {
+      drawPart(part);
+    }
+  } else {
+    for (auto idx : partsIndices) {
+      if (idx < parts.size()) {
+        drawPart(parts[idx]);
+      }
+    }
   }
   //mesh.draw(pass);
 }

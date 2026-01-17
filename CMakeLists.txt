@@ -64,6 +64,9 @@ add_executable(p64editor src/main.cpp
         # Imgui node editor
         vendored/ImNodeFlow/src/ImNodeFlow.cpp
 
+        # Regex
+        vendored/tiny-regex-c/re.c
+
         # editor
         src/editor/pages/editorScene.h
         src/editor/pages/editorScene.cpp
@@ -185,6 +188,7 @@ add_executable(p64editor src/main.cpp
         src/editor/pages/parts/nodeEditor.cpp
         src/project/component/shared/material.h
         src/project/component/shared/material.cpp
+        src/project/component/shared/meshFilter.cpp
 )
 
 target_include_directories(p64editor PRIVATE

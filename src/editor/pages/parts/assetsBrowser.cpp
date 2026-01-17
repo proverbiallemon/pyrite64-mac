@@ -9,7 +9,7 @@
 #include "../../imgui/helper.h"
 #include "../../../context.h"
 
-using FileType = Project::AssetManager::FileType;
+using FileType = Project::FileType;
 
 namespace
 {

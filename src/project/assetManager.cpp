@@ -47,7 +47,7 @@ namespace
   }
 
 
-  void deserialize(Project::AssetManager::AssetConf &conf, const std::filesystem::path &pathMeta)
+  void deserialize(Project::AssetConf &conf, const std::filesystem::path &pathMeta)
   {
     auto doc = Utils::JSON::loadFile(pathMeta);
     if (doc.is_object()) {
@@ -67,7 +67,7 @@ namespace
   }
 }
 
-std::string Project::AssetManager::AssetConf::serialize() const {
+std::string Project::AssetConf::serialize() const {
   return Utils::JSON::Builder{}
     .set("format", format)
     .set("baseScale", baseScale)
@@ -93,7 +93,7 @@ Project::AssetManager::~AssetManager() {
 
 }
 
-void Project::AssetManager::reloadEntry(Entry &entry, const std::string &path)
+void Project::AssetManager::reloadEntry(AssetManagerEntry &entry, const std::string &path)
 {
   switch(entry.type)
   {
@@ -183,7 +183,7 @@ void Project::AssetManager::reload() {
       auto romPath = outPath;
       romPath.replace(0, std::string{"filesystem/"}.length(), "rom:/");
 
-      Entry entry{
+      AssetManagerEntry entry{
         .uuid = uuid,
         .name = path.filename().string(),
         .path = path.string(),
@@ -274,7 +274,7 @@ void Project::AssetManager::reload() {
         continue;
       }
 
-      Entry entry{
+      AssetManagerEntry entry{
         .uuid = uuid,
         .name = path.filename().string(),
         .path = path.string(),

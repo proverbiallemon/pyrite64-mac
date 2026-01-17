@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 bool Build::buildPrefabAssets(Project::Project &project, SceneCtx &sceneCtx)
 {
   fs::path mkAsset = fs::path{project.conf.pathN64Inst} / "bin" / "mkasset";
-  auto &assets = sceneCtx.project->getAssets().getTypeEntries(Project::AssetManager::FileType::PREFAB);
+  auto &assets = sceneCtx.project->getAssets().getTypeEntries(Project::FileType::PREFAB);
   for (auto &asset : assets)
   {
     if(asset.conf.exclude)continue;

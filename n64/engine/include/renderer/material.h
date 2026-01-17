@@ -45,7 +45,7 @@ namespace P64::Renderer
       }
       if(setMask & MASK_ENV) {
         rdpq_sync_pipe();
-        rdpq_set_prim_color(colorEnv);
+        rdpq_set_env_color(colorEnv);
       }
     }
 

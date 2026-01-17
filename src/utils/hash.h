@@ -23,7 +23,7 @@ namespace Utils::Hash
     return static_cast<uint32_t>(sha256_64bit(str) & 0xFFFFFFFF);
   }
 
-  constexpr uint64_t crc64(const std::string& str)
+  constexpr uint64_t crc64(const std::string_view& str)
   {
     uint64_t crc = 0xFFFFFFFFFFFFFFFF;
     for (char c : str) {

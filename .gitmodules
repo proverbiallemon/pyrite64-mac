@@ -25,3 +25,6 @@
 [submodule "vendored/ImNodeFlow"]
 	path = vendored/ImNodeFlow
 	url = https://github.com/HailToDodongo/ImNodeFlow.git
+[submodule "vendored/tiny-regex-c"]
+	path = vendored/tiny-regex-c
+	url = https://github.com/kokke/tiny-regex-c.git

@@ -30,6 +30,20 @@ namespace TPL
 
 namespace ImGui
 {
+  inline bool CollapsingSubHeader(const char* label, ImGuiTreeNodeFlags flags = 0)
+  {
+    ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImGui::GetStyle().ItemSpacing + ImVec2{0, -4});
+
+    auto isOpen = ImGui::CollapsingHeader(label, flags);
+
+    ImGui::PopStyleColor(3);
+    ImGui::PopStyleVar(1);
+    return isOpen;
+  }
+
   bool IconButton(const char* label, const ImVec2 &labelSize, const ImVec4 &color = ImVec4{1,1,1,1});
 
   inline bool IconToggle(bool &state, const char* labelOn, const char* labelOff, const ImVec2 &labelSize)

@@ -59,7 +59,7 @@ namespace
   }
 
   AssetHandler assetHandler[] = {
-    [AssetType::UNKNOWN]     = {nullptr,                  nullptr                 },
+    [AssetType::UNKNOWN]     = {(LoadFunc)assetLoad,      (FreeFunc)free          },
     [AssetType::IMAGE]       = {(LoadFunc)sprite_load,    (FreeFunc)sprite_free   },
     [AssetType::AUDIO]       = {(LoadFunc)wav64Load,      (FreeFunc)wav64_close   },
     [AssetType::FONT]        = {(LoadFunc)rdpq_font_load, (FreeFunc)rdpq_font_free},

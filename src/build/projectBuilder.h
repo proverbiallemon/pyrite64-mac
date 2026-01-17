@@ -9,7 +9,7 @@
 namespace Build
 {
   // helper
-  bool assetBuildNeeded(const Project::AssetManager::Entry &asset, const std::string &outPath);
+  bool assetBuildNeeded(const Project::AssetManagerEntry &asset, const std::string &outPath);
 
   // Asset builds
   void buildScene(Project::Project &project, const Project::SceneEntry &scene, SceneCtx &ctx);
@@ -26,4 +26,13 @@ namespace Build
 
   // individual parts
   void writeObject(SceneCtx &ctx, Project::Object &obj, bool savePrefabItself = false);
+
+  bool buildT3DCollision(
+    Project::Project &project, SceneCtx &sceneCtx,
+    const std::unordered_set<std::string> &meshes,
+    uint64_t orgUUID,
+    uint64_t newUUID
+  );
+
+  Utils::BinaryFile buildCollision(const std::string &gltfPath, float baseScale, const std::unordered_set<std::string> &meshes = {});
 }

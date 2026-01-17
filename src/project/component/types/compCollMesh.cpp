@@ -16,6 +16,8 @@
 #include "../../../shader/defines.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include "../../../build/projectBuilder.h"
+#include "../shared/meshFilter.h"
 #include "glm/gtx/matrix_decompose.hpp"
 
 namespace Project::Component::CollMesh
@@ -23,6 +25,7 @@ namespace Project::Component::CollMesh
   struct Data
   {
     PROP_U64(modelUUID);
+    Shared::MeshFilter filter{};
     Renderer::Object obj3D{};
     Utils::AABB aabb{};
   };
@@ -34,14 +37,16 @@ namespace Project::Component::CollMesh
 
   nlohmann::json serialize(const Entry &entry) {
     Data &data = *static_cast<Data*>(entry.data.get());
-    Utils::JSON::Builder builder{};
-    builder.set(data.modelUUID);
-    return builder.doc;
+    return Utils::JSON::Builder{}
+      .set(data.modelUUID)
+      .set(data.filter.meshFilter)
+      .doc;
   }
 
   std::shared_ptr<void> deserialize(nlohmann::json &doc) {
     auto data = std::make_shared<Data>();
     Utils::JSON::readProp(doc, data->modelUUID);
+    Utils::JSON::readProp(doc, data->filter.meshFilter);
     return data;
   }
 
@@ -49,8 +54,40 @@ namespace Project::Component::CollMesh
   {
     Data &data = *static_cast<Data*>(entry.data.get());
 
-    auto res = ctx.assetUUIDToIdx.find(data.modelUUID.resolve(obj.propOverrides));
+    auto modelUUID = data.modelUUID.resolve(obj.propOverrides);
+    auto t3dm = ctx.project->getAssets().getEntryByUUID(modelUUID);
+    assert(t3dm);
+
     uint16_t id = 0xDEAD;
+    uint8_t flags = 0;
+
+    // we need a part of a collision mesh, by default (and for perf. reasons)
+    // the entire mesh is converted by default.
+    // generate a unique file for that instance (and do so via a hash to allow sharing)
+    auto &meshes = data.filter.filterT3DM(t3dm->t3dmData.models, obj, false);
+    if(!meshes.empty())
+    {
+      flags |= 1;
+      modelUUID = t3dm->getId();
+      char* meshIdxData = (char*)meshes.data();
+      modelUUID ^= Utils::Hash::crc64(std::string_view{meshIdxData, meshes.size() * sizeof(uint32_t)});
+
+      printf("===== CollMesh Mesh Filter Applied (%016llX) =====\n", modelUUID);
+      auto res = ctx.assetUUIDToIdx.find(modelUUID);
+      if (res == ctx.assetUUIDToIdx.end())
+      {
+        std::unordered_set<std::string> meshNames{};
+        for(auto meshIdx : meshes) {
+          meshNames.insert(t3dm->t3dmData.models[meshIdx].name);
+          printf(" - %s\n", t3dm->t3dmData.models[meshIdx].name.c_str());
+        }
+
+        Build::buildT3DCollision(*ctx.project, ctx, meshNames, t3dm->getId(), modelUUID);
+        printf(" => not found!\n");
+      }
+    }
+
+    auto res = ctx.assetUUIDToIdx.find(modelUUID);
     if (res == ctx.assetUUIDToIdx.end()) {
       Utils::Logger::log("Component Model: Model UUID not found: " + std::to_string(entry.uuid), Utils::Logger::LEVEL_ERROR);
     } else {
@@ -58,7 +95,7 @@ namespace Project::Component::CollMesh
     }
 
     ctx.fileObj.write<uint16_t>(id);
-    ctx.fileObj.write<uint16_t>(0);
+    ctx.fileObj.write<uint8_t>(flags);
   }
 
   void draw(Object &obj, Entry &entry)
@@ -66,7 +103,7 @@ namespace Project::Component::CollMesh
     Data &data = *static_cast<Data*>(entry.data.get());
 
     auto &assets = ctx.project->getAssets();
-    auto &modelList = assets.getTypeEntries(AssetManager::FileType::MODEL_3D);
+    auto &modelList = assets.getTypeEntries(FileType::MODEL_3D);
 
     if (ImTable::start("Comp", &obj)) {
       ImTable::add("Name", entry.name);
@@ -83,7 +120,7 @@ namespace Project::Component::CollMesh
 
       auto getter = [](void*, int idx) -> const char*
       {
-        auto &scriptList = ctx.project->getAssets().getTypeEntries(AssetManager::FileType::MODEL_3D);
+        auto &scriptList = ctx.project->getAssets().getTypeEntries(FileType::MODEL_3D);
         if (idx < 0 || idx >= scriptList.size())return "<Select Model>";
         return scriptList[idx].name.c_str();
       };
@@ -92,12 +129,31 @@ namespace Project::Component::CollMesh
         data.obj3D.removeMesh();
       }
 
+      const AssetManagerEntry* selModel = nullptr;
       if (idx < (int)modelList.size()) {
-        const auto &script = modelList[idx];
-        data.modelUUID.value = script.uuid;
+        selModel = &modelList[idx];
+        data.modelUUID.value = selModel->uuid;
       }
 
       ImTable::end();
+
+      if(selModel && ImGui::CollapsingSubHeader("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen) && ImTable::start("Filter", &obj))
+      {
+        bool changed = ImTable::addObjProp("Filter", data.filter.meshFilter);
+
+        if(changed || data.filter.cache.empty()) {
+          data.filter.filterT3DM(selModel->t3dmData.models, obj, false);
+        }
+
+        for(auto idx : data.filter.cache) {
+          ImGui::Text("%s@%s",
+            selModel->t3dmData.models[idx].name.c_str(),
+            selModel->t3dmData.models[idx].material.name.c_str()
+          );
+        }
+
+        ImTable::end();
+      }
     }
   }
 
@@ -128,7 +184,10 @@ namespace Project::Component::CollMesh
       skew, persp);
     data.obj3D.uniform.mat.flags |= DRAW_SHADER_COLLISION;
 
-    data.obj3D.draw(pass, cmdBuff);
+    auto asset = ctx.project->getAssets().getEntryByUUID(data.modelUUID.value);
+    auto &meshes = data.filter.filterT3DM(asset->t3dmData.models, obj, false);
+
+    data.obj3D.draw(pass, cmdBuff, meshes);
 
     bool isSelected = ctx.selObjectUUID == obj.uuid;
     if (isSelected)

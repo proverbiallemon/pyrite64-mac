@@ -109,7 +109,7 @@ void Debug::drawSphere(const fm_vec3_t &center, float radius, color_t color) {
 void Debug::draw(surface_t *fb) {
   if(lines.empty())return;
 
-  debugf("Drawing %d lines\n", lines.size());
+  debugf("Drawing %u lines\n", lines.size());
   rspq_wait();
 
   auto vp = t3d_viewport_get();

@@ -22,7 +22,7 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
   std::string srcSizeEntries = "";
   std::string srcDecl = "";
 
-  auto scripts = project.getAssets().getTypeEntries(Project::AssetManager::FileType::CODE_OBJ);
+  auto scripts = project.getAssets().getTypeEntries(Project::FileType::CODE_OBJ);
   uint32_t idx = 0;
   for (auto &script : scripts)
   {
@@ -72,7 +72,7 @@ void Build::buildScripts(Project::Project &project, SceneCtx &sceneCtx)
 void Build::buildGlobalScripts(Project::Project &project, SceneCtx &sceneCtx)
 {
   auto pathTable = project.getPath() + "/src/p64/globalScriptTable.cpp";
-  auto scripts = project.getAssets().getTypeEntries(Project::AssetManager::FileType::CODE_GLOBAL);
+  auto scripts = project.getAssets().getTypeEntries(Project::FileType::CODE_GLOBAL);
 
   std::string srcDecl = "";
 

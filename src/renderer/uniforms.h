@@ -16,6 +16,10 @@ namespace Renderer
 
   struct UniformN64Material
   {
+    constexpr static uint32_t FLAG_SET_BLEND_COL = 1 << 24;
+    constexpr static uint32_t FLAG_SET_ENV_COL   = 1 << 25;
+    constexpr static uint32_t FLAG_SET_PRIM_COL  = 1 << 26;
+
     glm::i32vec4 blender[2];
 
     //Tile settings: xy = TEX0, zw = TEX1
@@ -54,4 +58,13 @@ namespace Renderer
     UniformN64Material mat{};
     uint32_t objectID{};
   };
+
+  struct UniformsOverrides
+  {
+    glm::vec4 colPrim{};
+    glm::vec4 colEnv{};
+    bool setPrim{false};
+    bool setEnv{false};
+  };
+
 }

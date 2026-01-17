@@ -26,11 +26,10 @@ namespace P64::Comp
     Renderer::Material material{};
     uint8_t layerIdx{0};
     uint8_t flags{0};
+    uint8_t meshIdxCount{0};
+    uint8_t meshIndices[];
 
-    static uint32_t getAllocSize([[maybe_unused]] uint16_t* initData)
-    {
-      return sizeof(Model);
-    }
+    static uint32_t getAllocSize([[maybe_unused]] uint16_t* initData);
 
     static void initDelete([[maybe_unused]] Object& obj, Model* data, void* initData);
 

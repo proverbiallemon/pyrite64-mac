@@ -23,6 +23,7 @@ namespace Renderer
 
     public:
       UniformsObject uniform{};
+      UniformsOverrides overrides{};
 
       void setObjectID(uint32_t id) {
         uniform.objectID = id;
@@ -41,6 +42,10 @@ namespace Renderer
       void setPos(const glm::vec3& p) { pos = p; transformDirty = true; }
       void setScale(float s) { scale = s; transformDirty = true; }
 
-      void draw(SDL_GPURenderPass* pass, SDL_GPUCommandBuffer* cmdBuff);
+      void draw(
+        SDL_GPURenderPass* pass,
+        SDL_GPUCommandBuffer* cmdBuff,
+        const std::vector<uint32_t> &parts = {}
+      );
   };
 }

@@ -71,4 +71,14 @@ namespace Utils
       return 0;
     }
   }
+
+  inline std::string toHex64(uint64_t value) {
+    constexpr char hexChars[] = "0123456789ABCDEF";
+    std::string result(16, '0');
+    for (int i = 15; i >= 0; --i) {
+      result[i] = hexChars[value & 0xF];
+      value >>= 4;
+    }
+    return result;
+  }
 }

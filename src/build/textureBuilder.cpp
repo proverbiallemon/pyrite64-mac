@@ -19,7 +19,7 @@ bool Build::buildTextureAssets(Project::Project &project, SceneCtx &sceneCtx)
   fs::path mkAsset = fs::path{project.conf.pathN64Inst} / "bin" / "mkasset";
   fs::path mkSprite = fs::path{project.conf.pathN64Inst} / "bin" / "mksprite";
 
-  auto &images = sceneCtx.project->getAssets().getTypeEntries(Project::AssetManager::FileType::IMAGE);
+  auto &images = sceneCtx.project->getAssets().getTypeEntries(Project::FileType::IMAGE);
   for (auto &image : images)
   {
     if (image.conf.exclude)continue;

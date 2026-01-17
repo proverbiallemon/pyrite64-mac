@@ -55,7 +55,10 @@ namespace
     }
   }
 
-  void convert(const char* gltfPath, Utils::BinaryFile &file, float baseScale)
+  void convert(
+    const char* gltfPath, Utils::BinaryFile &file, float baseScale,
+    const std::unordered_set<std::string> &meshes
+  )
   {
     cgltf_options options{};
     cgltf_data* data = nullptr;
@@ -82,9 +85,12 @@ namespace
         continue;
       }
 
-      /*if(std::string(node->name).find("coll_") == std::string::npos) {
-        continue;
-      }*/
+      if(!meshes.empty())
+      {
+        if(node->name == nullptr || meshes.find(node->name) == meshes.end()) {
+          continue;
+        }
+      }
 
       auto nodeMat = parseNodeMatrix(node, {1.0f, 1.0f, 1.0f});
       auto mesh = node->mesh;
@@ -166,7 +172,7 @@ namespace
 
     assert(indices.size() % 3 == 0);
 
-    printf("Vert/Index count: %lu %lu\n", vertices.size(), indices.size());
+    // printf("Vert/Index count: %lu %lu\n", vertices.size(), indices.size());
 
     auto bvh = Project::Assets::Collision::createBVH(vertices, indices);
 
@@ -193,16 +199,21 @@ namespace
     file.align(4);
 
     file.writeArray(bvh.data(), bvh.size());
+    file.writeArray(bvh.data(), bvh.size());
     file.align(4);
   }
 }
 
 namespace Build
 {
-  std::vector<uint8_t> buildCollision(const std::string &gltfPath, float baseScale)
+  Utils::BinaryFile buildCollision(
+    const std::string &gltfPath,
+    float baseScale,
+    const std::unordered_set<std::string> &meshes
+  )
   {
     Utils::BinaryFile f{};
-    convert(gltfPath.c_str(), f, baseScale);
-    return f.getData();
+    convert(gltfPath.c_str(), f, baseScale, meshes);
+    return f;
   }
 }
