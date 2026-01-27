@@ -26,7 +26,6 @@ namespace
 
   constinit BigTex::FrameBuffers fbs{};
   constinit uint32_t frameIdx{0};
-  constinit surface_t *currSurf{};
 }
 
 void P64::RenderPipelineBigTex::init()
@@ -46,10 +45,11 @@ void P64::RenderPipelineBigTex::init()
   VI::SwapChain::setFrameBuffers(fbs.color);
 
   VI::SwapChain::setDrawPass([this](surface_t *surf, uint32_t fbIndex, auto done) {
-    currSurf = surf;
-    rdpq_attach(surf, BigTex::getZBuffer());
+    surfColor = surf;
+    surfDepth = BigTex::getZBuffer();
+    rdpq_attach(surfColor, surfDepth);
     scene.draw(VI::SwapChain::getDeltaTime());
-    Debug::Overlay::draw(scene, surf);
+    Debug::Overlay::draw(scene, surfColor);
     rdpq_detach_cb((void(*)(void*))((void*)done), (void*)fbIndex);
   });
 }
@@ -63,7 +63,6 @@ P64::RenderPipelineBigTex::~RenderPipelineBigTex()
 void P64::RenderPipelineBigTex::preDraw()
 {
   setupLayer();
-  surface_t *surfDepth = BigTex::getZBuffer();
 
   if(scene.getConf().flags & SceneConf::FLAG_CLR_COLOR) {
     assertf(false, "Clearing screen not supported in BigTex pipeline");
@@ -93,11 +92,11 @@ void P64::RenderPipelineBigTex::draw()
 
   rdpq_sync_tile();
   rdpq_sync_load();
-  rdpq_set_color_image(currSurf);
+  rdpq_set_color_image(surfColor);
   rdpq_set_mode_standard();
 
   rdpq_set_lookup_address(1, fbs.shade[frameIdxLast].buffer);
-  rdpq_set_lookup_address(2, currSurf->buffer);
+  rdpq_set_lookup_address(2, surfColor->buffer);
 
   rspq_flush();
 
@@ -114,7 +113,7 @@ void P64::RenderPipelineBigTex::draw()
       uint32_t stepSizeTexInRSP = quarterSlice * 1;
 
       uint32_t ptrInPos = (uint32_t)(texIn);
-      uint32_t ptrOutPos = (uint32_t) CachedAddr(currSurf->buffer);
+      uint32_t ptrOutPos = (uint32_t) CachedAddr(surfColor->buffer);
 
       // version without shading, this is the same as above without the RDP tasks inbetween
       stepSizeTexIn =  FB_SIZE_IN / SHADE_BLEND_SLICES;
@@ -135,8 +134,8 @@ void P64::RenderPipelineBigTex::draw()
       }
     }
     break;
-    case DRAW_MODE_UV: BigTex::applyTexturesUV(texIn, (uint16_t*)currSurf->buffer, FB_SIZE_IN); break;
-    case DRAW_MODE_MAT: BigTex::applyTexturesMat(texIn, (uint16_t*)currSurf->buffer, FB_SIZE_IN); break;
+    case DRAW_MODE_UV: BigTex::applyTexturesUV(texIn, (uint16_t*)surfColor->buffer, FB_SIZE_IN); break;
+    case DRAW_MODE_MAT: BigTex::applyTexturesMat(texIn, (uint16_t*)surfColor->buffer, FB_SIZE_IN); break;
   }
 
   ticks = get_ticks() - ticks;

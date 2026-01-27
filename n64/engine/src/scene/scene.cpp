@@ -204,8 +204,11 @@ void P64::Scene::update(float deltaTime)
 void P64::Scene::draw([[maybe_unused]] float deltaTime)
 {
   ticksDraw = get_ticks();
+
+  GlobalScript::callHooks(GlobalScript::HookType::SCENE_PRE_DRAW);
   renderPipeline->preDraw();
   DrawLayer::draw(0);
+
 
   // 3D Pass, for every active camera
   for(auto &cam : cameras)

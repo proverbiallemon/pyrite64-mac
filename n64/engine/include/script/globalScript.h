@@ -22,6 +22,7 @@ namespace P64::GlobalScript
     SCENE_UPDATE,
 
     // Drawing
+    SCENE_PRE_DRAW,
     SCENE_PRE_DRAW_3D,
     SCENE_POST_DRAW_3D,
 

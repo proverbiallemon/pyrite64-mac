@@ -35,7 +35,10 @@ void P64::RenderPipelineDefault::init()
   VI::SwapChain::setFrameBuffers(surfFbColor);
 
   VI::SwapChain::setDrawPass([this](surface_t *surf, uint32_t fbIndex, auto done) {
-    rdpq_attach(surf, &Mem::allocDepthBuffer(state.screenSize[0], state.screenSize[1]));
+    surfColor = surf;
+    surfDepth = &Mem::allocDepthBuffer(state.screenSize[0], state.screenSize[1]);
+
+    rdpq_attach(surf, surfDepth);
     scene.draw(VI::SwapChain::getDeltaTime());
 
     Debug::Overlay::draw(scene, surf);

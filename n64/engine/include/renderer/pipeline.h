@@ -16,8 +16,14 @@ namespace P64
 
       void setupLayer();
 
+      surface_t *surfColor{};
+      surface_t *surfDepth{};
+
     public:
       explicit RenderPipeline(Scene &sc) : scene{sc} {}
+
+      [[nodiscard]] surface_t* getCurrColorSurf() const { return surfColor; }
+      [[nodiscard]] surface_t* getCurrDepthSurf() const { return surfDepth; }
 
       virtual ~RenderPipeline() = default;
       virtual void init() = 0;

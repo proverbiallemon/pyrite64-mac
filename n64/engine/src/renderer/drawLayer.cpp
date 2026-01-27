@@ -33,7 +33,7 @@ namespace
   constinit P64::DrawLayer::Setup *layerSetup{};
 
   #ifndef LIBDRAGON_LAYERS
-    constexpr uint32_t LAYER_BUFFER_WORDS = 1024;
+    constexpr uint32_t LAYER_BUFFER_WORDS = 1024*2;
     constinit volatile uint32_t* layerMem{nullptr};
   #endif
 
