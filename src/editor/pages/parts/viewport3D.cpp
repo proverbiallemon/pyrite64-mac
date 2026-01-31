@@ -471,6 +471,16 @@ void Editor::Viewport3D::draw()
     bool isSnap = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
     bool isOnlySelf = ImGui::IsKeyDown(ImGuiKey_LeftShift);
 
+    // snap object to absolute grid
+    if(ImGui::IsKeyDown(ImGuiKey_LeftShift) && ImGui::IsKeyPressed(ImGuiKey_S))
+    {
+      glm::vec3 pos = obj->pos.resolve(obj->propOverrides);
+      pos.x = std::round(pos.x / snap.x) * snap.x;
+      pos.y = std::round(pos.y / snap.y) * snap.y;
+      pos.z = std::round(pos.z / snap.z) * snap.z;
+      obj->pos.resolve(obj->propOverrides) = pos;
+    }
+
     if(ImGuizmo::Manipulate(
       glm::value_ptr(uniGlobal.cameraMat),
       glm::value_ptr(uniGlobal.projMat),
