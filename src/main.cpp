@@ -163,7 +163,13 @@ int main(int argc, char** argv)
     Editor::Actions::registerAction(Editor::Actions::Type::PROJECT_OPEN, [](const std::string &path) {
       Utils::Logger::log("Open Project: " + path);
       delete ctx.project;
-      ctx.project = new Project::Project(path);
+      try {
+        ctx.project = new Project::Project(path);
+      } catch (const std::exception &e) {
+        Utils::Logger::log("Failed to open project: " + std::string(e.what()), Utils::Logger::LEVEL_ERROR);
+        ctx.project = nullptr;
+        return false;
+      }
       return true;
     });
 
@@ -260,9 +266,9 @@ int main(int argc, char** argv)
     Editor::Main editorMain{ctx.gpu};
     Editor::Scene editorScene{};
 
-    ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdOnBoot);
-    //Editor::Actions::call(Editor::Actions::Type::PROJECT_BUILD);
-    //Editor::Actions::call(Editor::Actions::Type::GAME_RUN);
+    if (ctx.project) {
+      ctx.project->getScenes().loadScene(ctx.project->conf.sceneIdOnBoot);
+    }
 
     // Main loop
     bool done = false;

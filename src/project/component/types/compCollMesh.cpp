@@ -184,6 +184,9 @@ namespace Project::Component::CollMesh
     data.obj3D.uniform.mat.flags |= DRAW_SHADER_COLLISION;
 
     auto asset = ctx.project->getAssets().getEntryByUUID(data.modelUUID.value);
+    if (!asset || !asset->mesh3D) {
+      return;
+    }
     auto &meshes = data.filter.filterT3DM(asset->t3dmData.models, obj, false);
 
     data.obj3D.draw(pass, cmdBuff, meshes);

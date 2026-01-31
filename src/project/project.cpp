@@ -34,6 +34,11 @@ void Project::Project::deserialize(const nlohmann::json &doc) {
 Project::Project::Project(const std::string &path)
   : path{path}, pathConfig{path + "/project.json"}
 {
+  auto configJSON = Utils::JSON::loadFile(pathConfig);
+  if (configJSON.empty()) {
+    throw std::runtime_error("Not a valid project!");
+  }
+
   Utils::FS::ensureDir(path);
   Utils::FS::ensureDir(path + "/data");
   Utils::FS::ensureDir(path + "/data/scenes");
@@ -47,7 +52,7 @@ Project::Project::Project(const std::string &path)
   Utils::FS::ensureFile(path + "/Makefile.custom", "data/build/baseMakefile.custom");
   Utils::FS::ensureFile(path + "/assets/p64/font.ia4.png", "data/build/assets/font.ia4.png");
 
-  deserialize(Utils::JSON::loadFile(pathConfig));
+  deserialize(configJSON);
   assets.reload();
   scenes.reload();
 }

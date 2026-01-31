@@ -36,6 +36,22 @@ The program itself can be placed anywhere on the system, however the `./data` di
 
 To open the editor simply execute `./p64editor`.
 
+(@TODO: provide pre-builds for windows/macos/linux)
+
+### Toolchains
+
+(@TODO: auto build/install those lazily on first projectbuild)
+
+Next install libdragon and tiny3d, the two projects are already included in `/vendored` as git submodules.
+Inside libdragon run:
+```sh
+./build.sh
+```
+For tiny3d, also run:
+```sh
+./build.sh
+```
+
 ## Credits & License
 © 2025-2026 - Max Bebök (HailToDodongo)<br>
 

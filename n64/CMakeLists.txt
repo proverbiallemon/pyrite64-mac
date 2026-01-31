@@ -15,8 +15,8 @@ set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_CXX_STANDARD 23)
 
-include_directories(~/Documents/projects/tiny3d/src)
-include_directories(~/Documents/projects/libdragon/include)
+include_directories(../vendored/tiny3d/src)
+include_directories(../vendored/libdragon/include)
 
 include_directories(engine/include)
 
