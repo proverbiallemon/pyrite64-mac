@@ -180,6 +180,7 @@ Editor::Viewport3D::~Viewport3D() {
 
 void Editor::Viewport3D::onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene)
 {
+  if(fb.getTexture() == nullptr)return;
   meshLines->vertLines.clear();
   meshLines->indices.clear();
 
@@ -316,7 +317,8 @@ void Editor::Viewport3D::draw()
   float moveSpeed = 120.0f * deltaTime;
 
   bool mouseHeldRight = ImGui::IsMouseDown(ImGuiMouseButton_Right);
-  bool newMouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Middle) || mouseHeldRight;
+  bool mouseHeldMiddle = ImGui::IsMouseDown(ImGuiMouseButton_Middle);
+  bool newMouseDown = mouseHeldMiddle || mouseHeldRight;
   bool isShiftDown = ImGui::GetIO().KeyShift;
   if(isShiftDown)moveSpeed *= 4.0f;
 
@@ -361,6 +363,15 @@ void Editor::Viewport3D::draw()
         if (ImGui::IsKeyDown(ImGuiKey_R))gizmoOp = 1;
         if (ImGui::IsKeyDown(ImGuiKey_S))gizmoOp = 2;
       }
+    }
+  }
+
+  if (isMouseHover && !ImViewGuizmo::IsOver()) {
+    float wheel = io.MouseWheel;
+    if (wheel != 0.0f) {
+      float wheelSpeed = (isShiftDown ? 4.0f : 1.0f) * 30.0f;
+      glm::vec3 forward = camera.rot * glm::vec3(0, 0, -1);
+      camera.velocity += forward * (wheel * wheelSpeed);
     }
   }
 
@@ -412,11 +423,10 @@ void Editor::Viewport3D::draw()
 
   auto dragDelta = mousePos - mousePosStart;
   if (isMouseDown) {
-    /*if (isShiftDown) {
+    if (mouseHeldMiddle) {
       camera.stopRotateDelta();
-      camera.moveDelta(dragDelta);
-    } else*/
-    {
+      camera.moveDelta(-dragDelta * 3.0f);
+    } else if (mouseHeldRight) {
       camera.stopMoveDelta();
       camera.rotateDelta(dragDelta);
     }

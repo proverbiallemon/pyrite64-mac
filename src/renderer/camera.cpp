@@ -6,12 +6,14 @@
 
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "glm/geometric.hpp"
 //#include "glm/gtx/quaternion.hpp"
 
 namespace
 {
   constexpr glm::vec3 WORLD_UP{0,1,0};
   constexpr glm::vec3 WORLD_FORWARD{0,0,-1};
+  constexpr float ORTHO_SIZE = 310.0f;
 }
 
 Renderer::Camera::Camera() {
@@ -38,7 +40,7 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
   if(isOrtho)
   {
     uniGlobal.spriteSize = {10, 10};
-    float orthoSize = 310;
+    float orthoSize = ORTHO_SIZE;
     uniGlobal.projMat = glm::ortho(
       -orthoSize * aspect,
       orthoSize * aspect,
@@ -87,8 +89,21 @@ void Renderer::Camera::moveDelta(glm::vec2 screenDelta) {
     posBase = pos;
     isMoving = true;
   }
-  float moveX = screenDelta.x * 0.001f;
-  float moveY = screenDelta.y * -0.001f;
+
+  float pixelsToWorld = 0.001f;
+  if (isOrtho) {
+    if (screenSize.y > 0.0f) {
+      pixelsToWorld = (ORTHO_SIZE * 2.0f) / screenSize.y;
+    }
+  } else {
+    float dist = glm::length(posOffset);
+    if (dist > 0.001f) {
+      pixelsToWorld = dist * 0.001f;
+    }
+  }
+
+  float moveX = screenDelta.x * pixelsToWorld;
+  float moveY = screenDelta.y * -pixelsToWorld;
 
   glm::vec3 right = rot * glm::vec3(1, 0, 0);
   glm::vec3 up = rot * glm::vec3(0, 1, 0);
