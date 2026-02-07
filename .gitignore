@@ -1,9 +1,14 @@
-build/
+/build/
 dist/
 cmake-*
 .idea
 imgui.ini
 p64editor
 pyrite64
+<<<<<<< feature/undo-redo
 .vscode
 *.pak
+=======
+pyrite64.exe
+*.dll
+>>>>>>> main

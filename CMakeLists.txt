@@ -11,14 +11,31 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O2")
 # debug, disable LTO
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-lto")
 
+set(SDL_SHARED_DEFAULT OFF)
+set(BUILD_SHARED_LIBS off)
 add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
 
-#list(PREPEND CMAKE_PREFIX_PATH
-#    "${CMAKE_SOURCE_DIR}/vendored/SDL/install"
-#)
-#find_package(SDL3 CONFIG REQUIRED)
+set(SDLIMAGE_BMP ON)
+set(SDLIMAGE_GIF ON)
+set(SDLIMAGE_JPG ON)
+set(SDLIMAGE_PNG ON)
+set(SDLIMAGE_SVG ON)
 
+# Not needed, some of those also break windows builds due to missing ASM compilers
+set(SDLIMAGE_AVIF OFF)
+set(SDLIMAGE_JXL OFF)
+set(SDLIMAGE_LBM OFF)
+set(SDLIMAGE_PCX OFF)
+set(SDLIMAGE_PNM OFF)
+set(SDLIMAGE_QOI OFF)
+set(SDLIMAGE_TGA OFF)
+set(SDLIMAGE_TIF OFF)
+set(SDLIMAGE_WEBP OFF)
+set(SDLIMAGE_XCF OFF)
+set(SDLIMAGE_XPM OFF)
+set(SDLIMAGE_XV OFF)
 add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
+
 add_subdirectory(vendored/glm EXCLUDE_FROM_ALL)
 
 add_compile_definitions(IMGUI_USE_WCHAR32)
@@ -234,6 +251,14 @@ set_target_properties(pyrite64 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOUR
 
 # Link to the actual SDL3 library.
 target_link_libraries(pyrite64 PRIVATE SDL3::SDL3 SDL3_image::SDL3_image glm::glm)
+
+if(MINGW)
+    target_link_options(pyrite64 PRIVATE
+        -static-libgcc
+        -static-libstdc++
+        --static
+    )
+endif()
 
 add_dependencies(pyrite64 copy_tiny3d)
 
