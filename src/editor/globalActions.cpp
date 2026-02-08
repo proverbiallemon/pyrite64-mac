@@ -100,10 +100,16 @@ namespace Editor::Actions
 
       ctx.futureBuildRun = std::async(std::launch::async, [] (std::string path, std::string runCmd)
       {
-        if(!Build::buildProject(path)) {
-          // @TODO: error popup
-          return;
-        }
+        auto oldPATH = std::getenv("PATH");
+        bool result = Build::buildProject(path);
+
+        #if defined(_WIN32)
+          _putenv_s("PATH", oldPATH);
+        #else 
+          setenv("PATH", oldPATH, 1);
+        #endif
+        
+        if(!result)return;
 
         if (!runCmd.empty()) {
           Utils::Proc::runSyncLogged(runCmd);
