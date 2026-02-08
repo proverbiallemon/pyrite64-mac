@@ -44,6 +44,9 @@ namespace Editor
       bool showCollMesh{true};
       bool showCollObj{true};
 
+      int gizmoOp{0};
+      bool gizmoTransformActive{false};
+
       void onRenderPass(SDL_GPUCommandBuffer* cmdBuff, Renderer::Scene& renderScene);
       void onCopyPass(SDL_GPUCommandBuffer* cmdBuff, SDL_GPUCopyPass *copyPass);
       void onPostRender(Renderer::Scene& renderScene);

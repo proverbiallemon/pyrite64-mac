@@ -28,10 +28,6 @@ namespace
     ImGuizmo::OPERATION::SCALE
   };
 
-  constinit int gizmoOp{0};
-
-  bool gizmoTransformActive{false};
-
   // A toggleable "connected" button (like in toolbars)
 bool ConnectedToggleButton(const char* text, bool active, bool first, bool last, ImVec2 size = ImVec2(20, 20))
 {

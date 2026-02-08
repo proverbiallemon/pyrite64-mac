@@ -3,6 +3,7 @@
 * @license MIT
 */
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -52,14 +53,9 @@ namespace Editor::UndoRedo
       std::string snapshotBefore;
       std::string snapshotDescription;
       Project::Scene* snapshotScene{nullptr};
+      uint32_t snapshotSelUUID{0};
       
     public:
-      /**
-       * Execute a command and add it to the undo stack.
-       * Clears the redo stack.
-       */
-      void execute(std::unique_ptr<Command> cmd);
-      
       /**
        * Undo the last command.
        * @return true if undo was performed

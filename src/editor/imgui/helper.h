@@ -158,6 +158,24 @@ namespace ImTable
 
   }
 
+  //Guard for capturing scene state before a widget edit and committing the snapshot after.
+  struct SnapshotGuard {
+    std::string beforeState{};
+    std::string description;
+
+    SnapshotGuard(const std::string& desc) : description(desc) {
+      if (!obj) return;
+      auto &history = Editor::UndoRedo::getHistory();
+      if (!history.isSnapshotActive()) {
+        beforeState = history.captureSnapshotState();
+      }
+    }
+
+    void finish(bool changed) {
+      handleSnapshot(description, changed, beforeState.empty() ? nullptr : &beforeState);
+    }
+  };
+
   template<typename GetLabel, typename ApplySelection>
   inline bool drawComboSelection(
     const char* label,
@@ -273,13 +291,9 @@ namespace ImTable
     bool disabled  (obj && obj->isPrefabInstance() && !obj->isPrefabEdit);
     if(disabled)ImGui::BeginDisabled();
     auto labelHidden = "##" + name;
-    auto &history = Editor::UndoRedo::getHistory();
-    std::string beforeState{};
-    if (!history.isSnapshotActive()) {
-      beforeState = history.captureSnapshotState();
-    }
+    SnapshotGuard guard("Edit " + name);
     bool changed = ImGui::Checkbox(labelHidden.c_str(), &value);
-    handleSnapshot("Edit " + name, changed, beforeState.empty() ? nullptr : &beforeState);
+    guard.finish(changed);
     if(disabled)ImGui::EndDisabled();
   }
 
@@ -290,11 +304,7 @@ namespace ImTable
     if(disabled)ImGui::BeginDisabled();
     auto labelHidden = "##" + name;
     // 8 checkboxes
-    auto &history = Editor::UndoRedo::getHistory();
-    std::string beforeState{};
-    if (!history.isSnapshotActive()) {
-      beforeState = history.captureSnapshotState();
-    }
+    SnapshotGuard guard("Edit " + name);
     for (int i = 0; i < 8; ++i) {
       bool bit = (value & (1 << i)) != 0;
       bool changed = ImGui::Checkbox(labelHidden.c_str(), &bit);
@@ -305,7 +315,7 @@ namespace ImTable
           value &= ~(1 << i);
         }
       }
-      handleSnapshot("Edit " + name, changed, beforeState.empty() ? nullptr : &beforeState);
+      guard.finish(changed);
       labelHidden += "1";
       if (i < 7)ImGui::SameLine();
     }
@@ -351,13 +361,9 @@ namespace ImTable
     if(obj && obj->isPrefabInstance() && !obj->isPrefabEdit)disabled = true;
     ImGui::PushID(name.c_str());
     if(disabled)ImGui::BeginDisabled();
-    auto &history = Editor::UndoRedo::getHistory();
-    std::string beforeState{};
-    if (!history.isSnapshotActive()) {
-      beforeState = history.captureSnapshotState();
-    }
+    SnapshotGuard guard("Edit " + name);
     bool changed = typedInput<T>(&value);
-    handleSnapshot("Edit " + name, changed, beforeState.empty() ? nullptr : &beforeState);
+    guard.finish(changed);
     if(disabled)ImGui::EndDisabled();
     ImGui::PopID();
     return changed;
@@ -368,13 +374,9 @@ namespace ImTable
   {
     add(name);
     ImGui::PushID(name.c_str());
-    auto &history = Editor::UndoRedo::getHistory();
-    std::string beforeState{};
-    if (!history.isSnapshotActive()) {
-      beforeState = history.captureSnapshotState();
-    }
+    SnapshotGuard guard("Edit " + name);
     bool changed = typedInput<T>(&prop.value);
-    handleSnapshot("Edit " + name, changed, beforeState.empty() ? nullptr : &beforeState);
+    guard.finish(changed);
     ImGui::PopID();
     return changed;
   }
@@ -448,13 +450,9 @@ namespace ImTable
       ImGui::SameLine();
     }
 
-    auto &history = Editor::UndoRedo::getHistory();
-    std::string beforeState{};
-    if (!history.isSnapshotActive()) {
-      beforeState = history.captureSnapshotState();
-    }
+    SnapshotGuard guard("Edit " + name);
     res = editFunc(val);
-    handleSnapshot("Edit " + name, res, beforeState.empty() ? nullptr : &beforeState);
+    guard.finish(res);
 
     if(isDisabled)ImGui::EndDisabled();
 
@@ -478,18 +476,14 @@ namespace ImTable
     add(name);
     bool disabled = (obj && obj->uuidPrefab.value);
     if(disabled)ImGui::BeginDisabled();
-    auto &history = Editor::UndoRedo::getHistory();
-    std::string beforeState{};
-    if (!history.isSnapshotActive()) {
-      beforeState = history.captureSnapshotState();
-    }
+    SnapshotGuard guard("Edit " + name);
     bool changed = false;
     if (withAlpha) {
       changed = ImGui::ColorEdit4(name.c_str(), glm::value_ptr(color), ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
     } else {
       changed = ImGui::ColorEdit3(name.c_str(), glm::value_ptr(color), ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
     }
-    handleSnapshot("Edit " + name, changed, beforeState.empty() ? nullptr : &beforeState);
+    guard.finish(changed);
     if(disabled)ImGui::EndDisabled();
   }
 
@@ -505,18 +499,14 @@ namespace ImTable
     ImGui::PopID();
     ImGui::SameLine();
 
-    auto &history = Editor::UndoRedo::getHistory();
-    std::string beforeState{};
-    if (!history.isSnapshotActive()) {
-      beforeState = history.captureSnapshotState();
-    }
+    SnapshotGuard guard("Edit " + name);
     bool changed = false;
     if (placeholder.empty()) {
       changed = ImGui::InputText(labelHidden.c_str(), &str);
     } else {
       changed = ImGui::InputTextWithHint(labelHidden.c_str(), placeholder.c_str(), &str);
     }
-    handleSnapshot("Edit " + name, changed, beforeState.empty() ? nullptr : &beforeState);
+    guard.finish(changed);
   }
 
 }

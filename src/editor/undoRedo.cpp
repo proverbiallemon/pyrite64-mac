@@ -14,33 +14,32 @@ namespace
       std::string beforeState;
       std::string afterState;
       std::string description;
-
-      void applyState(const std::string& state)
-      {
-        if (!scene) return;
-        scene->deserialize(state);
-
-        if (ctx.selObjectUUID != 0 && !scene->getObjectByUUID(ctx.selObjectUUID)) {
-          ctx.selObjectUUID = 0;
-        }
-      }
+      uint32_t selBefore;
+      uint32_t selAfter;
 
     public:
-      SceneSnapshotCommand(Project::Scene* targetScene, std::string before, std::string after, std::string desc)
+      SceneSnapshotCommand(Project::Scene* targetScene, std::string before, std::string after, std::string desc,
+                           uint32_t selBefore, uint32_t selAfter)
         : scene(targetScene),
           beforeState(std::move(before)),
           afterState(std::move(after)),
-          description(std::move(desc))
+          description(std::move(desc)),
+          selBefore(selBefore),
+          selAfter(selAfter)
       {}
 
       void execute() override
       {
-        applyState(afterState);
+        if (!scene) return;
+        scene->deserialize(afterState);
+        ctx.selObjectUUID = scene->getObjectByUUID(selAfter) ? selAfter : 0;
       }
 
       void undo() override
       {
-        applyState(beforeState);
+        if (!scene) return;
+        scene->deserialize(beforeState);
+        ctx.selObjectUUID = scene->getObjectByUUID(selBefore) ? selBefore : 0;
       }
 
       std::string getDescription() const override
@@ -57,16 +56,6 @@ namespace
 
 namespace Editor::UndoRedo
 {
-  void History::execute(std::unique_ptr<Command> cmd)
-  {
-    if (!cmd) return;
-    bool started = beginSnapshot(cmd->getDescription());
-    cmd->execute();
-    if (started) {
-      endSnapshot();
-    }
-  }
-  
   bool History::undo()
   {
     if (undoStack.empty()) return false;
@@ -101,6 +90,7 @@ namespace Editor::UndoRedo
     snapshotBefore.clear();
     snapshotDescription.clear();
     snapshotScene = nullptr;
+    snapshotSelUUID = 0;
   }
 
   bool History::beginSnapshot(const std::string& description)
@@ -114,6 +104,7 @@ namespace Editor::UndoRedo
       snapshotBefore = scene->serialize();
       snapshotDescription = description;
       snapshotScene = scene;
+      snapshotSelUUID = ctx.selObjectUUID;
     }
 
     ++snapshotDepth;
@@ -131,6 +122,7 @@ namespace Editor::UndoRedo
       snapshotBefore = before;
       snapshotDescription = description;
       snapshotScene = scene;
+      snapshotSelUUID = ctx.selObjectUUID;
     }
 
     ++snapshotDepth;
@@ -173,7 +165,9 @@ namespace Editor::UndoRedo
       scene,
       std::move(before),
       std::move(after),
-      std::move(description)
+      std::move(description),
+      snapshotSelUUID,
+      ctx.selObjectUUID
     ));
 
     if (undoStack.size() > maxHistorySize) {
