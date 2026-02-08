@@ -225,6 +225,8 @@ add_executable(pyrite64 src/main.cpp
         src/project/component/types/compAnimModel.cpp
         src/editor/pages/parts/createProjectOverlay.cpp
         src/editor/globalActions.cpp
+        src/editor/pages/parts/toolchainOverlay.cpp
+        src/utils/toolchain.cpp
 )
 
 target_include_directories(pyrite64 PRIVATE
@@ -259,20 +261,3 @@ if(MINGW)
         --static
     )
 endif()
-
-add_dependencies(pyrite64 copy_tiny3d)
-
-# Copy over tiny3d, this is to make sure that during bundling it is still kept
-add_custom_command(
-    OUTPUT ${CMAKE_SOURCE_DIR}/n64/tiny3d
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_SOURCE_DIR}/vendored/tiny3d
-            ${CMAKE_SOURCE_DIR}/n64/tiny3d
-    DEPENDS ${CMAKE_SOURCE_DIR}/vendored/tiny3d
-    COMMENT "Copying tiny3d to data/n64/tiny3d"
-)
-
-add_custom_target(copy_tiny3d ALL
-    DEPENDS ${CMAKE_SOURCE_DIR}/n64/tiny3d
-)
-

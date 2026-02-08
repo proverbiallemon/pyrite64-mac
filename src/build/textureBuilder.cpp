@@ -30,7 +30,7 @@ bool Build::buildTextureAssets(Project::Project &project, SceneCtx &sceneCtx)
       outPath = outPath.substr(0, outPath.size() - 7) + ".bci";
     }
 
-    sceneCtx.files.push_back(outPath);
+    sceneCtx.files.push_back(Utils::FS::toUnixPath(outPath));
 
     auto assetPath = fs::path{project.getPath()} / outPath;
     auto assetDir = assetPath.parent_path();
@@ -52,7 +52,7 @@ bool Build::buildTextureAssets(Project::Project &project, SceneCtx &sceneCtx)
       cmd += " -o " + assetDir.string();
       cmd += " " + image.path;
 
-      if(!Utils::Proc::runSyncLogged(cmd)) {
+      if(!sceneCtx.toolchain.runCmdSyncLogged(cmd)) {
         return false;
       }
     }

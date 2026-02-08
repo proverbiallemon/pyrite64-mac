@@ -24,7 +24,7 @@ bool Build::buildAudioAssets(Project::Project &project, SceneCtx &sceneCtx)
     auto outDir = outPath.parent_path();
     Utils::FS::ensureDir(outPath.parent_path());
 
-    sceneCtx.files.push_back(asset.outPath);
+    sceneCtx.files.push_back(Utils::FS::toUnixPath(asset.outPath));
 
     if(!assetBuildNeeded(asset, outPath))continue;
 
@@ -40,7 +40,7 @@ bool Build::buildAudioAssets(Project::Project &project, SceneCtx &sceneCtx)
     cmd += " -o " + outDir.string();
     cmd += " " + asset.path;
 
-    if(!Utils::Proc::runSyncLogged(cmd)) {
+    if(!sceneCtx.toolchain.runCmdSyncLogged(cmd)) {
       return false;
     }
   }

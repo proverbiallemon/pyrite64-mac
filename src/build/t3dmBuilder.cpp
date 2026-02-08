@@ -50,7 +50,8 @@ bool Build::buildT3DCollision(
   std::string cmd = mkAsset.string() + " -c 1";;
   cmd += " -o " + outPath.parent_path().string();
   cmd += " " + outPath.string();
-  if(!Utils::Proc::runSyncLogged(cmd)) {
+
+  if(!sceneCtx.toolchain.runCmdSyncLogged(cmd)) {
     return false;
   }
 
@@ -70,7 +71,7 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
     auto t3dmPath = projectPath / model.outPath;
     auto t3dmDir = t3dmPath.parent_path();
 
-    sceneCtx.files.push_back(model.outPath);
+    sceneCtx.files.push_back(Utils::FS::toUnixPath(model.outPath));
 
     if(assetBuildNeeded(model, t3dmPath)) {
       Utils::FS::ensureDir(t3dmDir);
@@ -103,7 +104,7 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
       cmd += " -o " + t3dmDir.string();
       cmd += " " + t3dmPath.string();
 
-      if(!Utils::Proc::runSyncLogged(cmd)) {
+      if(!sceneCtx.toolchain.runCmdSyncLogged(cmd)) {
         return false;
       }
     }
@@ -119,7 +120,7 @@ bool Build::buildT3DMAssets(Project::Project &project, SceneCtx &sceneCtx)
           if (name.string().starts_with(fileName)) {
             // path relative to project
             auto relPath = fs::relative(path, projectPath).string();
-            sceneCtx.files.push_back(relPath);
+            sceneCtx.files.push_back(Utils::FS::toUnixPath(relPath));
           }
         }
       }

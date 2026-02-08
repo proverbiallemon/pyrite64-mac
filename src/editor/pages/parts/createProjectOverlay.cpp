@@ -60,6 +60,7 @@ void Editor::CreateProjectOverlay::open()
   } else {
     const char* home = std::getenv("HOME");
     projectPath = (home && *home) ? home : ".";
+    projectPath = expandHomePath(projectPath);
   }
 }
 
@@ -106,10 +107,9 @@ bool Editor::CreateProjectOverlay::draw()
     ImGui::Dummy({0, 4});
     // text in gray
     ImGui::Text("Project will be created in:");
-    std::string expandedPath = expandHomePath(projectPath);
-    std::filesystem::path fullPath = expandedPath;
+    std::filesystem::path fullPath = projectPath;
     fullPath = fullPath / projectSafeName;
-    ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "%s", fullPath.c_str());
+    ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "%s", fullPath.string().c_str());
 
     ImGui::Dummy({0, 10});
     ImGui::Separator();

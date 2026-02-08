@@ -58,12 +58,13 @@ bool Build::buildProject(const std::string &path)
   {
     // read env
   #if defined(_WIN32)
-    char* n64InstEnv = nullptr;
+    /*char* n64InstEnv = nullptr;
     size_t envSize = 0;
     if(_dupenv_s(&n64InstEnv, &envSize, "N64_INST") == 0 && n64InstEnv != nullptr) {
       project.conf.pathN64Inst = n64InstEnv;
       free(n64InstEnv);
-    }
+    }*/
+   project.conf.pathN64Inst = "/pyrite64-sdk";
   #else
     char* n64InstEnv = getenv("N64_INST");
     if(n64InstEnv != nullptr) {
@@ -72,11 +73,17 @@ bool Build::buildProject(const std::string &path)
   #endif
   } else {
   #if defined(_WIN32)
-    _putenv_s("N64_INST", project.conf.pathN64Inst.c_str());
+    //_putenv_s("N64_INST", project.conf.pathN64Inst.c_str());
   #else
     setenv("N64_INST", project.conf.pathN64Inst.c_str(), 0);
   #endif
   }
+
+  #if defined(_WIN32)
+    _putenv_s("N64_INST", project.conf.pathN64Inst.c_str());
+    _putenv_s("MSYSTEM", "MINGW64");
+    _putenv_s("PATH", "C:\\msys64\\mingw64\\bin;C:\\msys64\\usr\\bin");
+  #endif
 
   auto enginePath = fs::current_path() / "n64" / "engine";
   enginePath = fs::absolute(enginePath);
@@ -87,6 +94,7 @@ bool Build::buildProject(const std::string &path)
   }
 
   SceneCtx sceneCtx{};
+  sceneCtx.toolchain.scan();
   sceneCtx.project = &project;
 
   // Global project config
@@ -179,27 +187,31 @@ bool Build::buildProject(const std::string &path)
   }
   fileList.writeToFile(fsDataPath / "a");
 
+  // kep order stable to detect makefile changes
+  auto filesSorted = sceneCtx.files;
+  std::sort(filesSorted.begin(), filesSorted.end());
+
   // Makefile
   auto makefile = Utils::replaceAll(
     Utils::FS::loadTextFile("data/build/baseMakefile.mk"),
     {
       {"{{N64_INST}}",          project.conf.pathN64Inst},
-      {"{{ENGINE_PATH}}",       enginePath.string()},
+      {"{{ENGINE_PATH}}",       Utils::FS::toUnixPath(enginePath)},
       {"{{ROM_NAME}}",          project.conf.romName},
       {"{{PROJECT_NAME}}",      project.conf.name},
-      {"{{ASSET_LIST}}",        Utils::join(sceneCtx.files, " ")},
+      {"{{ASSET_LIST}}",        Utils::join(filesSorted, " ")},
       {"{{USER_CODE_DIRS}}",    userCodeRules},
       {"{{P64_SELF_PATH}}",     Utils::Proc::getSelfPath()},
       {"{{PROJECT_SELF_PATH}}", fs::absolute(path).string()},
     }
   );
 
-  auto oldMakefile = Utils::FS::loadTextFile(path + "/Makefile");
-  if (oldMakefile != makefile) {
+  auto mkPath = fs::absolute(path) / "Makefile";
+  auto oldMakefile = Utils::FS::loadTextFile(mkPath);
+  if (makefile != oldMakefile) {
     Utils::Logger::log("Makefile changed, clean build");
-
-    Utils::FS::saveTextFile(path + "/Makefile", makefile);
-    Utils::Proc::runSyncLogged("make -C \"" + path + "\" cleanCode");
+    Utils::FS::saveTextFile(mkPath, makefile);
+    sceneCtx.toolchain.runCmdSyncLogged("make -C \"" + path + "\" cleanCode");
   }
 
   {
@@ -214,7 +226,7 @@ bool Build::buildProject(const std::string &path)
   }
 
   // Build
-  bool success = Utils::Proc::runSyncLogged("make -C \"" + path + "\" -j8");
+  bool success = sceneCtx.toolchain.runCmdSyncLogged("make -C \"" + path + "\" -j8");
 
   if(success) {
     Utils::Logger::log("Build done!");

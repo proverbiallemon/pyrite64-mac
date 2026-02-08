@@ -28,7 +28,7 @@ bool Build::buildNodeGraphAssets(Project::Project &project, SceneCtx &sceneCtx)
     std::string sourceName = Utils::toHex64(asset.getUUID()) + ".cpp";
     fs::path sourceOutPath = sourcePath / sourceName;
 
-    sceneCtx.files.push_back(asset.outPath);
+    sceneCtx.files.push_back(Utils::FS::toUnixPath(asset.outPath));
     sceneCtx.graphFunctions.push_back(asset.getUUID());
 
     if(!assetBuildNeeded(asset, outPath) && std::filesystem::exists(sourceOutPath))continue;

@@ -49,6 +49,7 @@ void cli(argparse::ArgumentParser &prog);
 int main(int argc, char** argv)
 {
   std::filesystem::current_path(Utils::Proc::getSelfDir());
+  ctx.toolchain.scan();
 
   auto cliRes = CLI::run(argc, argv);
   if (cliRes != CLI::Result::GUI) {
@@ -87,7 +88,8 @@ int main(int argc, char** argv)
   }
 
   // Create GPU Device
-  ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_METALLIB,true,nullptr);
+  bool debugMode = false;
+  ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, debugMode, nullptr);
   if (ctx.gpu == nullptr)
   {
     printf("Error: SDL_CreateGPUDevice(): %s\n", SDL_GetError());
@@ -96,7 +98,8 @@ int main(int argc, char** argv)
 
   auto pros = SDL_GetGPUDeviceProperties(ctx.gpu);
   auto gpuName = SDL_GetStringProperty(pros, SDL_PROP_GPU_DEVICE_NAME_STRING, "");
-  printf("Selected GPU: %s\n", gpuName);
+  auto gpuDriver = SDL_GetStringProperty(pros, SDL_PROP_GPU_DEVICE_DRIVER_NAME_STRING, "");
+  printf("Selected GPU: %s | %s\n", gpuName, gpuDriver);
   fflush(stdout);
 
   // Claim window for GPU Device

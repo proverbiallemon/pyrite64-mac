@@ -84,13 +84,6 @@ namespace Project::Component::Code
     }
   }
 
-  const char* getter(void* user_data, int idx)
-  {
-    auto &scriptList = ctx.project->getAssets().getTypeEntries(FileType::CODE_OBJ);
-    if (idx < 0 || idx >= (int)scriptList.size())return "<Select Script>";
-    return scriptList[idx].name.c_str();
-  }
-
   void draw(Object &obj, Entry &entry)
   {
     Data &data = *static_cast<Data*>(entry.data.get());

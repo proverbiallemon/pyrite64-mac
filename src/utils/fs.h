@@ -28,7 +28,7 @@ namespace Utils::FS
   }
 
   inline void saveTextFile(const std::filesystem::path &path, const std::string &content) {
-    FILE *file = fopen(path.string().c_str(), "w");
+    FILE *file = fopen(path.string().c_str(), "wb");
     if(!file)return;
     fwrite(content.data(), 1, content.size(), file);
     fclose(file);
@@ -44,5 +44,13 @@ namespace Utils::FS
   void delDir(const std::string &dirPath);
 
   uint64_t getFileAge(const std::filesystem::path &filePath);
+
+  inline std::string toUnixPath(const std::filesystem::path &path) {
+    auto res = path.string();
+    for(auto &c : res) {
+      if(c == '\\')c = '/';
+    }
+    return res;
+  }
 
 }

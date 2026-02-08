@@ -41,7 +41,7 @@ namespace
 
   std::string getAssetROMPath(const std::string &path, const std::string &basePath)
   {
-    auto pathAbs = fs::absolute(path).string();
+    auto pathAbs = Utils::FS::toUnixPath(fs::absolute(path));
     pathAbs = pathAbs.substr(basePath.length());
     pathAbs = Utils::replaceFirst(pathAbs, "/assets/", "filesystem/");
     return pathAbs;
@@ -383,4 +383,17 @@ uint64_t Project::AssetManager::createNodeGraph(const std::string &name)
 
   auto entry = getByName(name);
   return entry ? entry->getUUID() : 0;
+}
+
+Project::AssetManagerEntry *Project::AssetManager::getByPath(const std::string &path)
+{
+  std::filesystem::path pathIn{path};
+  for (auto &typed : entries) {
+    for (auto &entry : typed) {
+      if (std::filesystem::path{entry.path} == pathIn) {
+        return &entry;
+      }
+    }
+  }
+  return nullptr;
 }

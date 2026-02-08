@@ -14,6 +14,7 @@ namespace Editor
       Renderer::Texture texTitle;
       Renderer::Texture texBtnAdd;
       Renderer::Texture texBtnOpen;
+      Renderer::Texture texBtnTool;
       Renderer::Texture texBG;
 
     public:

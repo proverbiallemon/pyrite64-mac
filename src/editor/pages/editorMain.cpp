@@ -11,18 +11,21 @@
 #include "imgui.h"
 #include "../actions.h"
 #include "../../utils/filePicker.h"
+#include "../../context.h"
 #include "backends/imgui_impl_sdlgpu3.h"
 #include "parts/createProjectOverlay.h"
+#include "parts/toolchainOverlay.h"
 #include "SDL3/SDL_dialog.h"
 
 void ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 
 namespace
 {
-  constexpr float BTN_SPACING = 170;
+  constexpr float BTN_SPACING = 300;
 
   bool isHoverAdd = false;
   bool isHoverLast = false;
+  bool isHoverTool = false;
 
   void renderSubText(
     float centerPosX, const ImVec2 &btnSizeLast,
@@ -43,8 +46,10 @@ Editor::Main::Main(SDL_GPUDevice* device)
   : texTitle{device, "data/img/titleLogo.png"},
   texBtnAdd{device, "data/img/cardAdd.svg"},
   texBtnOpen{device, "data/img/cardLast.svg"},
+  texBtnTool{device, "data/img/cardTool.svg"},
   texBG{device, "data/img/splashBG.png"}
 {
+  ctx.toolchain.scan();
 }
 
 Editor::Main::~Main() {
@@ -52,6 +57,7 @@ Editor::Main::~Main() {
 
 void Editor::Main::draw()
 {
+  const auto &toolState = ctx.toolchain.getState();
   auto &io = ImGui::GetIO();
 
   ImGui::SetNextWindowPos({0,0}, ImGuiCond_Appearing, {0.0f, 0.0f});
@@ -103,30 +109,28 @@ void Editor::Main::draw()
   });
   ImGui::Image(ImTextureID(texTitle.getGPUTex()),logoSize);
 
-  auto getBtnPos = [&](ImVec2 size, bool isLeft) {
-    return ImVec2{
-      centerPos.x - (size.x/2) + (isLeft ? -BTN_SPACING : BTN_SPACING),
-      midBgPointY - (size.y/2)
-    };
-  };
-
-  auto renderButton = [&](Renderer::Texture &img, const char* text, bool& hover, bool isLeft) -> bool
+  auto renderButton = [&](Renderer::Texture &img, const char* text, bool& hover, int &posX) -> bool
   {
     auto btnSizeAdd = img.getSize(hover ? 0.85f : 0.8f);
-    ImGui::SetCursorPos(getBtnPos(btnSizeAdd, isLeft));
-    bool res = ImGui::ImageButton(isLeft ? "L" : "R",
+    ImVec2 btnPos{
+      posX  - (btnSizeAdd.x/2),
+      midBgPointY - (btnSizeAdd.y/2),
+    };
+
+    ImGui::SetCursorPos(btnPos);
+    bool res = ImGui::ImageButton(std::to_string(posX).c_str(),
         ImTextureID(img.getGPUTex()),
         btnSizeAdd, {0,0}, {1,1}, {0,0,0,0},
         {1,1,1, hover ? 1 : 0.8f}
     );
     hover = ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly);
 
-    if(hover)renderSubText(
-      centerPos.x + (isLeft ? -BTN_SPACING : BTN_SPACING),
+    renderSubText(
+      btnPos.x + (btnSizeAdd.x / 2),
       btnSizeAdd, midBgPointY, text
     );
 
-
+    posX += BTN_SPACING;
     return res;
   };
 
@@ -135,16 +139,48 @@ void Editor::Main::draw()
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.f, 0.f, 0.f, 0.f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.f, 0.f, 0.f, 0.f));
 
-  if(renderButton(texBtnAdd, "Create Project", isHoverAdd, true))
+  bool validToolchain = toolState.hasToolchain && toolState.hasLibdragon && toolState.hasTiny3d;
+  int buttonCount = validToolchain ? 3 : 1;
+
+  // screen center
+  int posX = (int)centerPos.x - 6;
+  if(buttonCount == 3) {
+    posX -= (BTN_SPACING);
+  }
+  
+  if(buttonCount == 3) 
   {
-    CreateProjectOverlay::open();
+    if(renderButton(texBtnAdd, "Create Project", isHoverAdd, posX))
+    {
+      CreateProjectOverlay::open();
+    }
+
+    if (renderButton(texBtnOpen, "Open Project", isHoverLast, posX)) {
+      Utils::FilePicker::open([](const std::string &path) {
+        if (path.empty()) return;
+        Actions::call(Actions::Type::PROJECT_OPEN, path);
+      }, true, "Choose Project Folder");
+    }
   }
 
-  if (renderButton(texBtnOpen, "Open Project", isHoverLast, false)) {
-    Utils::FilePicker::open([](const std::string &path) {
-      if (path.empty()) return;
-      Actions::call(Actions::Type::PROJECT_OPEN, path);
-    }, true, "Choose Project Folder");
+  const char* toolchainText = validToolchain ? "Toolchain" : "Install Toolchain";
+  if(renderButton(texBtnTool, toolchainText, isHoverTool, posX))
+  {
+    ToolchainOverlay::open();
+  }
+
+  if(!validToolchain) {
+    ImGui::PushFont(nullptr, 32);
+    const char* warnText = ICON_MDI_ALERT " Toolchain not found";
+    float textWidth = ImGui::CalcTextSize(warnText).x;
+    ImGui::SetCursorPos({
+      centerPos.x - (textWidth / 2),
+      midBgPointY - (texBtnTool.getHeight() * 0.8f / 2) - 50
+    });
+    
+    ImGui::TextColored({1.0f, 0.2f, 0.2f, 1.0f}, warnText);
+    ImGui::PopFont();
+    
   }
 
   ImGui::PopStyleColor(3);
@@ -161,6 +197,7 @@ void Editor::Main::draw()
   ImGui::Text(creditsStr);
 
   CreateProjectOverlay::draw();
+  ToolchainOverlay::draw();
 
   ImGui::End();
 }

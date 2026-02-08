@@ -7,6 +7,7 @@
 
 #include "stringTable.h"
 #include "../utils/binaryFile.h"
+#include "../utils/toolchain.h"
 
 namespace Project { class Project; class Scene; struct AssetManagerEntry; }
 
@@ -22,6 +23,7 @@ namespace Build
 
   struct SceneCtx
   {
+    Utils::Toolchain toolchain{};
     Project::Project *project{};
     Project::Scene *scene{};
     std::vector<std::string> files{};

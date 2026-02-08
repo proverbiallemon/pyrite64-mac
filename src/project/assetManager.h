@@ -122,16 +122,7 @@ namespace Project
         return nullptr;
       }
 
-      AssetManagerEntry* getByPath(const std::string &path) {
-        for (auto &typed : entries) {
-          for (auto &entry : typed) {
-            if (entry.path == path) {
-              return &entry;
-            }
-          }
-        }
-        return nullptr;
-      }
+      AssetManagerEntry* getByPath(const std::string &path);
 
       AssetManagerEntry* getEntryByUUID(uint64_t uuid) {
         auto it = entriesMap.find(uuid);

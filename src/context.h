@@ -6,6 +6,7 @@
 #include <future>
 
 #include "project/project.h"
+#include "utils/toolchain.h"
 #include "SDL3/SDL.h"
 
 namespace Renderer { class Scene; }
@@ -13,6 +14,7 @@ namespace Renderer { class Scene; }
 struct Context
 {
   // Globals
+  Utils::Toolchain toolchain{};
   Project::Project *project{nullptr};
   Renderer::Scene *scene{nullptr};
   SDL_Window* window{nullptr};

@@ -24,7 +24,7 @@ bool Build::buildPrefabAssets(Project::Project &project, SceneCtx &sceneCtx)
     auto outDir = outPath.parent_path();
     Utils::FS::ensureDir(outPath.parent_path());
 
-    sceneCtx.files.push_back(asset.outPath);
+    sceneCtx.files.push_back(Utils::FS::toUnixPath(asset.outPath));
     if(!assetBuildNeeded(asset, outPath))continue;
 
     //printf("Prefab: %s -> %s\n", asset.path.c_str(), outPath.string().c_str());

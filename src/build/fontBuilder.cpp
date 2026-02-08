@@ -22,7 +22,7 @@ bool Build::buildFontAssets(Project::Project &project, SceneCtx &sceneCtx)
     auto outDir = outPath.parent_path();
     Utils::FS::ensureDir(outPath.parent_path());
 
-    sceneCtx.files.push_back(font.outPath);
+    sceneCtx.files.push_back(Utils::FS::toUnixPath(font.outPath));
 
     uint32_t fontId = font.conf.fontId.value;
     if(fontId > 0 && fontId < sceneCtx.autoLoadFontUUIDs.size()) {
@@ -46,7 +46,7 @@ bool Build::buildFontAssets(Project::Project &project, SceneCtx &sceneCtx)
     if(!charsetFile.empty())cmd += " --charset " + charsetFile.string();
     cmd += " " + font.path;
 
-    bool res = Utils::Proc::runSyncLogged(cmd);
+    bool res = sceneCtx.toolchain.runCmdSyncLogged(cmd);
     std::filesystem::remove(charsetFile);
     if(!res)return false;
   }
