@@ -88,7 +88,8 @@ int main(int argc, char** argv)
   }
 
   // Create GPU Device
-  ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, nullptr);
+  bool debugMode = false;
+  ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, debugMode, nullptr);
   if (ctx.gpu == nullptr)
   {
     printf("Error: SDL_CreateGPUDevice(): %s\n", SDL_GetError());
