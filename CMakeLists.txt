@@ -253,6 +253,9 @@ set_target_properties(pyrite64 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOUR
 target_link_libraries(pyrite64 PRIVATE SDL3::SDL3 SDL3_image::SDL3_image glm::glm)
 
 if(MINGW)
+    set(APP_ICON_RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/icon.rc")
+    target_sources(pyrite64 PRIVATE ${APP_ICON_RESOURCE})
+
     target_link_options(pyrite64 PRIVATE
         -static-libgcc
         -static-libstdc++
