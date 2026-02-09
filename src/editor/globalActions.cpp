@@ -4,6 +4,7 @@
 */
 #include "actions.h"
 #include "../project/project.h"
+#include "../editor/imgui/notification.h"
 #include "../utils/logger.h"
 #include "../context.h"
 #include "../build/projectBuilder.h"
@@ -112,7 +113,10 @@ namespace Editor::Actions
           setenv("PATH", oldPATH, 1);
         #endif
         
-        if(!result)return;
+        if(!result) {
+          Editor::Noti::add(Editor::Noti::Type::ERROR, "Build failed!");
+          return;
+        }
 
         if (!runCmd.empty()) {
           Utils::Proc::runSyncLogged(runCmd);

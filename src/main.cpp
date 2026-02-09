@@ -18,6 +18,7 @@
 #include "editor/imgui/theme.h"
 #include "editor/pages/editorMain.h"
 #include "editor/pages/editorScene.h"
+#include "editor/imgui/notification.h"
 #include "renderer/scene.h"
 #include "renderer/shader.h"
 #include "SDL3_image/SDL_image.h"
@@ -253,6 +254,8 @@ int main(int argc, char** argv)
       } else {
         editorMain.draw();
       }
+
+      Editor::Noti::draw();
 
       ImGui::Render();
       scene.draw();

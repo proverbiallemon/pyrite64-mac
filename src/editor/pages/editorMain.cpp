@@ -16,6 +16,7 @@
 #include "parts/createProjectOverlay.h"
 #include "parts/toolchainOverlay.h"
 #include "SDL3/SDL_dialog.h"
+#include "../imgui/notification.h"
 
 void ImDrawCallback_ImplSDLGPU3_SetSamplerRepeat(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 

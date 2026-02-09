@@ -5,6 +5,7 @@
 #include "createProjectOverlay.h"
 #include "../../actions.h"
 #include "../../imgui/helper.h"
+#include "../../imgui/notification.h"
 #include <iostream>
 #include <cstdlib>
 
@@ -139,15 +140,16 @@ bool Editor::CreateProjectOverlay::draw()
       args["name"] = projectName;
       args["rom"] = projectSafeName;
 
-      Editor::Actions::call(Actions::Type::PROJECT_CREATE, args.dump());
+      if(Editor::Actions::call(Actions::Type::PROJECT_CREATE, args.dump())) {
+        projectName.clear();
+        projectSafeName.clear();
+        projectPath.clear();
 
-      projectName.clear();
-      projectSafeName.clear();
-      projectPath.clear();
-
-      Editor::Actions::call(Actions::Type::PROJECT_OPEN, fullPath.string());
-
-      ImGui::CloseCurrentPopup();
+        if(Editor::Actions::call(Actions::Type::PROJECT_OPEN, fullPath.string())) {
+          Editor::Noti::add(Editor::Noti::SUCCESS, "Project successfully created!");
+          ImGui::CloseCurrentPopup();
+        }
+      }
     }
     if(!canCreate)ImGui::EndDisabled();
 

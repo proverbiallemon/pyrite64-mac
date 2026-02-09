@@ -3,6 +3,8 @@
 * @license MIT
 */
 #include "actions.h"
+#include "../utils/logger.h"
+#include "imgui/notification.h"
 
 #include <utility>
 
@@ -29,7 +31,12 @@ void Editor::Actions::registerAction(Type type, ActionFn fn) {
 
 bool Editor::Actions::call(Type type, const std::string &arg) {
   if (actionCallbacks[static_cast<uint8_t>(type)]) {
-    return actionCallbacks[static_cast<uint8_t>(type)](arg);
+    try {
+      return actionCallbacks[static_cast<uint8_t>(type)](arg);
+    } catch (const std::exception &e) {
+      Utils::Logger::log("Error executing action: " + std::string(e.what()), Utils::Logger::LEVEL_ERROR);
+      Editor::Noti::add(Editor::Noti::Type::ERROR, "Action Failed: " + std::string(e.what()));
+    }
   }
   return false;
 }
