@@ -46,6 +46,14 @@ namespace
       {
         return description;
       }
+
+      uint64_t getMemoryUsage() const override 
+      {
+        return sizeof(SceneSnapshotCommand)
+          + beforeState.size()
+          + afterState.size()
+          + description.size();
+      }
   };
 }
 
@@ -215,6 +223,18 @@ namespace Editor::UndoRedo
     }
   }
   
+  uint64_t History::getMemoryUsage()
+  {
+    uint64_t total = 0;
+    for(auto &entry : redoStack) {
+      total += entry->getMemoryUsage();
+    }
+    for(auto &entry : undoStack) {
+      total += entry->getMemoryUsage();
+    }
+    return total;
+  }
+
   History& getHistory()
   {
     return globalHistory;
