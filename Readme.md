@@ -26,6 +26,16 @@ An N64 game-engine and editor using <a href="https://github.com/DragonMinded/lib
 
 Below is the current documentation for now:
 
+## Showcase
+
+<p align="center">
+<a href="https://www.youtube.com/watch?v=zz_wByA_k6E" target="_blank">
+    <img src="https://img.youtube.com/vi/zz_wByA_k6E/0.jpg" width="250">
+</a>
+<br/>
+Cathode Quest 64 (YouTube)  
+</p>
+
 ## Documentation
 
 - Installation & Docs:
