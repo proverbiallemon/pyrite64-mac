@@ -74,7 +74,6 @@ cleanP64: clean
 p64:
 	{{P64_SELF_PATH}} --cli --cmd build {{PROJECT_SELF_PATH}}
 
-
 -include $(wildcard $(BUILD_DIR)/src/*.d)
 
 .PHONY: all clean

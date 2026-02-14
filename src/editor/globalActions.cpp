@@ -88,6 +88,7 @@ namespace Editor::Actions
 
       // clear some temp files
       fs::remove(newPath / "p64_project.z64");
+      fs::remove(newPath / "Makefile");
       fs::remove_all(newPath / "build");
       fs::remove_all(newPath / "filesystem");
 

@@ -27,6 +27,7 @@ namespace
     ImGuizmo::OPERATION::ROTATE,
     ImGuizmo::OPERATION::SCALE
   };
+  constinit bool isTransWorld = true;
 
   // A toggleable "connected" button (like in toolbars)
 bool ConnectedToggleButton(const char* text, bool active, bool first, bool last, ImVec2 size = ImVec2(20, 20))
@@ -408,7 +409,13 @@ void Editor::Viewport3D::draw()
   }
 
   ImGui::SameLine();
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 16);
+
+  if (ConnectedToggleButton(ICON_MDI_WEB, isTransWorld, true, true, ImVec2(32,24))) {
+    isTransWorld = !isTransWorld;
+  }
+
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 12);
 
   if(ConnectedToggleButton(ICON_MDI_GRID, showGrid, true, true, ImVec2(32,24))) {
     showGrid = !showGrid;
@@ -506,7 +513,7 @@ void Editor::Viewport3D::draw()
       glm::value_ptr(uniGlobal.cameraMat),
       glm::value_ptr(uniGlobal.projMat),
       GIZMO_OPS[gizmoOp],
-      ImGuizmo::MODE::WORLD,
+      isTransWorld ? ImGuizmo::MODE::WORLD : ImGuizmo::MODE::LOCAL,
       glm::value_ptr(gizmoMat),
       nullptr,
       isSnap ? glm::value_ptr(snap) : nullptr
