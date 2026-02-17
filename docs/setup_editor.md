@@ -23,7 +23,7 @@ This will walk your through the process of installing it, most of which is fully
 
 Once that part is done, you now have two new options to either open or create a new project.
 
-<img src="./docs/img/editor01.png" width="450">
+<img src="./img/editor01.png" width="450">
 
 ### Creating a new Project
 
@@ -42,7 +42,7 @@ Since it has a unique file extension, you can also associate it with the editor 
 Bundled with the editor is also an example project called "Cathode Quest 64" (N64Brew 2025 GameJam entry).<br>
 This is located in `n64/examples/jam25`, and is going to be updated over time as the editor grows.<br>
 
-<img src="./docs/img/editor00.png" width="450">
+<img src="./img/editor00.png" width="450">
 
 ---
 Next: [Using the Editor](./usage_editor.md)
