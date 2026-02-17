@@ -5,6 +5,12 @@ project(pyrite64 VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+    message(FATAL_ERROR
+        "In-source builds are disabled.\n"
+        "Run: cmake --preset <name>")
+endif()
+
 # set(SDL_SHARED ON)
 # set(SDL_STATIC ON)
 
