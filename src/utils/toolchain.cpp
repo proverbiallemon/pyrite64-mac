@@ -73,8 +73,8 @@ void Utils::Toolchain::scan()
 
 namespace
 {
-  void runInstallScript(fs::path mingwPath) {
-    // C:\msys64\usr\bin\mintty.exe /bin/env MSYSTEM=MINGW64 /bin/bash -l %self_path%mingw_create_env.sh
+  void runInstallScript(fs::path mingwPath, bool forceUpdate) {
+    // C:\msys64\usr\bin\mintty.exe --hold=error /bin/env MSYSTEM=MINGW64 /bin/bash -l %self_path%mingw_create_env.sh
     auto minttyPath = mingwPath / "usr" / "bin" / "mintty.exe";
     if (!fs::exists(minttyPath)) {
       printf("Error: mintty.exe not found at expected location: %s\n", minttyPath.string().c_str());
@@ -82,7 +82,9 @@ namespace
       return;
     }
 
-    std::string command = minttyPath.string() + " /bin/env MSYSTEM=MINGW64 /bin/bash -l ";
+    std::string envVars = "MSYSTEM=MINGW64 ";
+    if (forceUpdate) envVars += "FORCE_UPDATE=true ";
+    std::string command = minttyPath.string() + " --hold=error /bin/env " + envVars + "/bin/bash -l ";
     
     fs::path selfPath{Utils::Proc::getSelfPath()};
     selfPath = selfPath.parent_path(); // remove executable name
@@ -103,7 +105,8 @@ void Utils::Toolchain::install()
   }
 
   installing.store(true);
-  std::thread installThread(runInstallScript, state.mingwPath);
+  bool isInstalled = state.hasToolchain && state.hasLibdragon && state.hasTiny3d;
+  std::thread installThread(runInstallScript, state.mingwPath, isInstalled);
   installThread.detach();
 }
 
