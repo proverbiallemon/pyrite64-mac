@@ -374,7 +374,13 @@ void Editor::Viewport3D::draw()
         if (ImGui::IsKeyDown(ImGuiKey_S))gizmoOp = 2;
 
         if (ImGui::IsKeyDown(ImGuiKey_F) && obj) {
-          camera.focus(obj->pos.resolve(obj->propOverrides), 100);
+          glm::vec3 objPos = obj->pos.resolve(obj->propOverrides);
+          glm::quat objRot = obj->rot.resolve(obj->propOverrides);
+          glm::vec3 objScale = obj->scale.resolve(obj->propOverrides);
+          glm::vec3 camUp = camera.rot * glm::vec3{0,1,0};
+          float objHeight = glm::dot(camUp, objRot*objScale);
+          float focusDist = camera.calculateFocusDistance(objHeight);
+          camera.focus(objPos, focusDist);
         }
       }
     }

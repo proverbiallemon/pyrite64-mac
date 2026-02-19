@@ -7,6 +7,7 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/geometric.hpp"
+
 //#include "glm/gtx/quaternion.hpp"
 
 namespace
@@ -14,6 +15,7 @@ namespace
   constexpr glm::vec3 WORLD_UP{0,1,0};
   constexpr glm::vec3 WORLD_FORWARD{0,0,-1};
   constexpr float ORTHO_SIZE = 310.0f;
+  constexpr float FOV = 70.0f;
 }
 
 Renderer::Camera::Camera() {
@@ -49,7 +51,7 @@ void Renderer::Camera::apply(UniformGlobal &uniGlobal)
   float aspect = screenSize.x / screenSize.y;
   float near = 10.0f;
   float far = 10'000.0f;
-  float fov = glm::radians(70.0f);
+  float fov = glm::radians(FOV);
 
   if(isOrtho)
   {
@@ -157,3 +159,8 @@ void Renderer::Camera::focus(glm::vec3 position, float distance) {
   pos = pivot + posOffset;
 }
 
+float Renderer::Camera::calculateFocusDistance(float height) {
+    float fov = glm::radians(FOV);
+    float dist = screenSize.y * height * 0.5f / tanf(fov * 0.5f);
+    return dist * 1.1f;
+}

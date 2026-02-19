@@ -52,5 +52,6 @@ namespace Renderer
       }
 
       void focus(glm::vec3 position, float distance);
+      float calculateFocusDistance(float height);
   };
 }
