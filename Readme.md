@@ -87,9 +87,20 @@ Then launch `Pyrite64.app`. No Gatekeeper issues when building locally.
 
 ### Gatekeeper Note
 
-If you **downloaded** the `.app` from GitHub, macOS will block it on first launch since it isn't notarized. Either:
-- **Right-click** the .app > **Open** > click **Open** in the dialog, or
-- Run `xattr -cr Pyrite64.app` in Terminal
+If you **downloaded** the `.app` from GitHub, macOS will block it on first launch since it isn't notarized.
+
+**On macOS Sequoia (15) and newer:**
+1. Try to open the app — macOS will block it
+2. Go to **System Settings** > **Privacy & Security**, scroll down and click **Open Anyway**
+3. Click **Open Anyway** again in the confirmation dialog
+
+**On older macOS versions:**
+- **Right-click** the .app > **Open** > click **Open** in the dialog
+
+**Alternatively**, run this in Terminal to skip Gatekeeper entirely:
+```bash
+xattr -cr Pyrite64.app
+```
 
 This only applies to downloaded builds, not when building from source. Only needed once.
 

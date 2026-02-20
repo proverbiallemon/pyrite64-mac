@@ -31,7 +31,10 @@ Download or clone the macOS edition from:
 https://github.com/proverbiallemon/pyrite64-mac
 <br>(Or build from [source](./build_editor.md))
 
-If you downloaded the `.app` from GitHub, right-click it > **Open** on first launch to bypass Gatekeeper (only needed once).<br>
+If you downloaded the `.app` from GitHub, macOS will block it on first launch since it isn't notarized.<br>
+On **macOS Sequoia (15) and newer**: try to open it, then go to **System Settings** > **Privacy & Security** > **Open Anyway**, and confirm in the dialog.<br>
+On **older macOS**: right-click the .app > **Open** > click **Open** in the dialog.<br>
+Or run `xattr -cr Pyrite64.app` in Terminal. Only needed once.<br>
 If you built from source with `./build_app.sh`, this step is not needed.
 
 Open the **Toolchain Manager** and click **Install**.<br>
