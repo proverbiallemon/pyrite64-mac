@@ -23,7 +23,22 @@ pacman -S mingw-w64-ucrt-x86_64-ninja
 
 ## Build Instructions
 
-After cloning the `pyrite64` repo, make sure to fetch all the submodules:
+After cloning the `pyrite64` repo, make sure that Git LFS is initialized:
+
+```sh
+git lfs install
+```
+
+And:
+
+```sh
+git lfs update
+```
+
+After the initial clonning.
+
+Also make sure to fetch all the submodules:
+
 ```sh
 git submodule update --init --recursive
 ```
