@@ -209,11 +209,18 @@ void Editor::Main::draw()
     ImGui::Text("v" PYRITE_VERSION);
 
     constexpr const char* creditsStr = "©2025-2026 - Max Bebök (HailToDodongo)";
+    constexpr const char* portStr = "macOS port: Lemon (proverbiallemon)";
+    float creditsWidth = std::max(ImGui::CalcTextSize(creditsStr).x, ImGui::CalcTextSize(portStr).x);
     ImGui::SetCursorPos({
-      io.DisplaySize.x - PADDING - ImGui::CalcTextSize(creditsStr).x,
-      io.DisplaySize.y - FONT_SIZE - PADDING
+      io.DisplaySize.x - PADDING - creditsWidth,
+      io.DisplaySize.y - (FONT_SIZE * 2) - PADDING
     });
     ImGui::Text(creditsStr);
+    ImGui::SetCursorPos({
+      io.DisplaySize.x - PADDING - ImGui::CalcTextSize(portStr).x,
+      io.DisplaySize.y - FONT_SIZE - PADDING
+    });
+    ImGui::Text(portStr);
     ImGui::PopFont();
   }
 
