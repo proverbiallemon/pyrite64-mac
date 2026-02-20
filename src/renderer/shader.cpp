@@ -27,7 +27,8 @@ Renderer::Shader::Shader(SDL_GPUDevice* device, const Config &conf)
 		format = SDL_GPU_SHADERFORMAT_SPIRV;
 		entrypoint = "main";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		throw std::runtime_error("Metal Backend not supported!"); // .msl
+		pathVert += "msl";
+		pathFrag += "msl";
 		format = SDL_GPU_SHADERFORMAT_MSL;
 		entrypoint = "main0";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {

@@ -66,6 +66,16 @@ bool Build::buildProject(const std::string &configPath)
       free(n64InstEnv);
     }*/
    project.conf.pathN64Inst = "/pyrite64-sdk";
+  #elif defined(__APPLE__)
+    char* n64InstEnv = getenv("N64_INST");
+    if(n64InstEnv != nullptr) {
+      project.conf.pathN64Inst = n64InstEnv;
+    } else {
+      const char* homeDir = getenv("HOME");
+      if(homeDir) {
+        project.conf.pathN64Inst = std::string(homeDir) + "/pyrite64-sdk";
+      }
+    }
   #else
     char* n64InstEnv = getenv("N64_INST");
     if(n64InstEnv != nullptr) {
@@ -84,6 +94,10 @@ bool Build::buildProject(const std::string &configPath)
     _putenv_s("N64_INST", project.conf.pathN64Inst.c_str());
     _putenv_s("MSYSTEM", "MINGW64");
     _putenv_s("PATH", "C:\\msys64\\mingw64\\bin;C:\\msys64\\usr\\bin");
+  #else
+    if(!project.conf.pathN64Inst.empty()) {
+      setenv("N64_INST", project.conf.pathN64Inst.c_str(), 1);
+    }
   #endif
 
   auto fsDataPath = fs::absolute(fs::path{path} / "filesystem" / "p64");

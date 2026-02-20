@@ -115,10 +115,14 @@ int main(int argc, char** argv)
 
   // Create GPU Device
   bool debugMode = false;
+#ifdef __APPLE__
+  ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_MSL, debugMode, nullptr);
+#else
   ctx.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, debugMode, nullptr);
+#endif
   if (ctx.gpu == nullptr)
   {
-    fatal("Error: Cannot initialize Vulkan GPU\nPyrite currently requires a Vulkan capable GPU to run.\n\nSDL_CreateGPUDevice(): %s\n", SDL_GetError());
+    fatal("Error: Cannot initialize GPU\nNo supported GPU backend found.\n\nSDL_CreateGPUDevice(): %s\n", SDL_GetError());
     return -1;
   }
 

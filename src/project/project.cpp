@@ -26,7 +26,11 @@ std::string Project::ProjectConf::serialize() const {
 void Project::Project::deserialize(const nlohmann::json &doc) {
   conf.name = doc.value("name", "New Project");
   conf.romName = doc.value("romName", "pyrite64");
+#if defined(__APPLE__)
+  conf.pathEmu = doc.value("pathEmu", "open -a ares");
+#else
   conf.pathEmu = doc.value("pathEmu", "ares");
+#endif
   conf.pathN64Inst = doc.value("pathN64Inst", "");
   conf.sceneIdOnBoot = doc.value("sceneIdOnBoot", 1);
   conf.sceneIdOnReset = doc.value("sceneIdOnReset", 1);

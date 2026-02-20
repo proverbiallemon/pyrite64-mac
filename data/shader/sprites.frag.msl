@@ -1,0 +1,31 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct main0_out
+{
+    float4 FragColor [[color(0)]];
+    uint ObjID [[color(1)]];
+};
+
+struct main0_in
+{
+    float4 v_color [[user(locn0)]];
+    float2 v_uv [[user(locn1)]];
+    uint v_objectID [[user(locn2)]];
+};
+
+fragment main0_out main0(main0_in in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler texSmplr [[sampler(0)]])
+{
+    main0_out out = {};
+    float4 texCol = tex.sample(texSmplr, in.v_uv);
+    if (texCol.w < 0.25)
+    {
+        discard_fragment();
+    }
+    out.FragColor = texCol * in.v_color;
+    out.ObjID = in.v_objectID;
+    return out;
+}
+

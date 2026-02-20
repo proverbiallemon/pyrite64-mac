@@ -1,0 +1,97 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+// Implementation of signed integer mod accurate to SPIR-V specification
+template<typename Tx, typename Ty>
+inline Tx spvSMod(Tx x, Ty y)
+{
+    Tx remainder = x - y * (x / y);
+    return select(Tx(remainder + y), remainder, remainder == 0 || (x >= 0) == (y >= 0));
+}
+
+struct UniformGlobal
+{
+    float4x4 projMat;
+    float4x4 cameraMat;
+    float2 screenSize;
+    float2 spriteSize;
+};
+
+struct UniformObject
+{
+    float4x4 modelMat;
+    uint objectID;
+};
+
+struct main0_out
+{
+    float4 v_color [[user(locn0)]];
+    float2 v_uv [[user(locn1)]];
+    uint v_objectID [[user(locn2)]];
+    float4 gl_Position [[position]];
+};
+
+struct main0_in
+{
+    float3 inPosition [[attribute(0)]];
+    uint inObjectId [[attribute(1)]];
+    float4 inColor [[attribute(2)]];
+};
+
+vertex main0_out main0(main0_in in [[stage_in]], constant UniformGlobal& _22 [[buffer(0)]], constant UniformObject& _34 [[buffer(1)]], uint gl_VertexIndex [[vertex_id]])
+{
+    main0_out out = {};
+    int corner = spvSMod(int(gl_VertexIndex), 4);
+    float4x4 matMVP = (_22.projMat * _22.cameraMat) * _34.modelMat;
+    float4 posScreen = matMVP * float4(in.inPosition, 1.0);
+    float2 stepPerPixel = float2(2.0 / _22.screenSize.x, 2.0 / _22.screenSize.y);
+    float2 localSpriteSize = _22.spriteSize * stepPerPixel;
+    float2 uv = float2(0.0);
+    out.v_color = in.inColor;
+    out.v_color.w = 1.0;
+    if (corner == 0)
+    {
+        posScreen.x -= localSpriteSize.x;
+        posScreen.y += localSpriteSize.y;
+        uv = float2(0.0);
+    }
+    else
+    {
+        if (corner == 1)
+        {
+            posScreen.x += localSpriteSize.x;
+            posScreen.y += localSpriteSize.y;
+            uv = float2(1.0, 0.0);
+        }
+        else
+        {
+            if (corner == 3)
+            {
+                posScreen.x -= localSpriteSize.x;
+                posScreen.y -= localSpriteSize.y;
+                uv = float2(0.0, 1.0);
+            }
+            else
+            {
+                if (corner == 2)
+                {
+                    posScreen.x += localSpriteSize.x;
+                    posScreen.y -= localSpriteSize.y;
+                    uv = float2(1.0);
+                }
+            }
+        }
+    }
+    float spriteIdx = in.inColor.w * 255.0;
+    uv.x *= 0.125;
+    uv.x += (spriteIdx * 0.125);
+    out.gl_Position = posScreen;
+    out.v_uv = uv;
+    out.v_objectID = in.inObjectId;
+    return out;
+}
+

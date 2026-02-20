@@ -1,0 +1,166 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct UniformGlobal
+{
+    float4x4 projMat;
+    float4x4 cameraMat;
+    float2 screenSize;
+};
+
+struct UBO_Material
+{
+    float4x4 modelMat;
+    int4 blender[2];
+    float4 mask;
+    float4 shift;
+    float4 low;
+    float4 high;
+    int4 cc0Color;
+    int4 cc0Alpha;
+    int4 cc1Color;
+    int4 cc1Alpha;
+    int4 modes;
+    float4 lightColor[2];
+    float4 lightDir[2];
+    float4 colPrim;
+    float4 colEnv;
+    float4 ambientColor;
+    float4 ck_center;
+    float4 ck_scale;
+    float4 primLodDepth;
+    float4 k_0123;
+    float2 k_45;
+    uint objectID;
+};
+
+struct UniformObject
+{
+    UBO_Material material;
+};
+
+struct main0_out
+{
+    float4 v_color [[user(locn0)]];
+    float4 uv [[user(locn1)]];
+    uint v_objectID [[user(locn2)]];
+    float4 tileSize [[user(locn3)]];
+    float2 posScreen [[user(locn4)]];
+    float4 cc_shade [[user(locn5)]];
+    float4 cc_shade_flat [[user(locn6)]];
+    float4 gl_Position [[position]];
+};
+
+struct main0_in
+{
+    int4 inPosition [[attribute(0)]];
+    float4 inColor [[attribute(1)]];
+    int2 inUV [[attribute(2)]];
+};
+
+static inline __attribute__((always_inline))
+float4x4 quantizeMat4(thread float4x4& inMat)
+{
+    inMat = inMat * 65536.0;
+    inMat[0] = round(inMat[0]);
+    inMat[1] = round(inMat[1]);
+    inMat[2] = round(inMat[2]);
+    inMat[3] = round(inMat[3]);
+    float4x4 _56 = inMat;
+    float4x4 _57 = _56 * 1.52587890625e-05;
+    inMat = _57;
+    return _57;
+}
+
+static inline __attribute__((always_inline))
+float3x3 quantizeMat3(thread float3x3& inMat)
+{
+    inMat = inMat * 32768.0;
+    inMat[0] = round(inMat[0]);
+    inMat[1] = round(inMat[1]);
+    inMat[2] = round(inMat[2]);
+    float3x3 _77 = inMat;
+    float3x3 _78 = _77 * 3.0517578125e-05;
+    inMat = _78;
+    return _78;
+}
+
+static inline __attribute__((always_inline))
+float3x3 calcNormalMax(thread const float4x4& mat)
+{
+    float3x3 res = float3x3(mat[0].xyz, mat[1].xyz, mat[2].xyz);
+    res[0] = fast::normalize(res[0]);
+    res[1] = fast::normalize(res[1]);
+    res[2] = fast::normalize(res[2]);
+    float3x3 param = res;
+    float3x3 _132 = quantizeMat3(param);
+    return _132;
+}
+
+static inline __attribute__((always_inline))
+float3 unpackNormals(thread const int& _packed)
+{
+    int3 comp = int3(_packed) >> int3(11, 5, 0);
+    comp &= int3(31, 63, 31);
+    comp = (comp << int3(27, 26, 27)) >> int3(27, 26, 27);
+    return float3(comp) / float3(15.0, 31.0, 15.0);
+}
+
+vertex main0_out main0(main0_in in [[stage_in]], constant UniformGlobal& _139 [[buffer(0)]], constant UniformObject& _152 [[buffer(1)]])
+{
+    main0_out out = {};
+    float4x4 param = _139.cameraMat * _152.material.modelMat;
+    float4x4 _157 = quantizeMat4(param);
+    float4x4 matMV = _157;
+    float4x4 matMVP = _139.projMat * matMV;
+    float4x4 param_1 = _152.material.modelMat;
+    float3x3 matNormLight = calcNormalMax(param_1);
+    float4x4 param_2 = matMV;
+    float3x3 matNormScreen = calcNormalMax(param_2);
+    float2 uvPixel = float2(in.inUV) / float2(32.0);
+    out.v_objectID = _152.material.objectID;
+    int param_3 = in.inPosition.w;
+    float3 inNormal = unpackNormals(param_3);
+    float3 norm = inNormal;
+    float3 normWorld = matNormLight * norm;
+    float3 normScreen = matNormScreen * norm;
+    out.gl_Position = matMVP * float4(float3(float4(in.inPosition).xyz), 1.0);
+    out.posScreen = out.gl_Position.xy / float2(out.gl_Position.w);
+    out.cc_shade = in.inColor;
+    float4 lightTotal = _152.material.ambientColor;
+    for (int i = 0; i < 2; i++)
+    {
+        float lightStren = fast::max(dot(normWorld, _152.material.lightDir[i].xyz), 0.0);
+        float4 colorNorm = _152.material.lightColor[i];
+        lightTotal += (colorNorm * lightStren);
+    }
+    lightTotal = fast::clamp(lightTotal, float4(0.0), float4(1.0));
+    float4 shadeWithLight = out.cc_shade * lightTotal;
+    out.cc_shade = mix(shadeWithLight, out.cc_shade, float4(float((_152.material.modes.w & 32) != 0)));
+    out.cc_shade = fast::clamp(out.cc_shade, float4(0.0), float4(1.0));
+    out.cc_shade_flat = out.cc_shade;
+    float2 texSize = (_152.material.high.xy - _152.material.low.xy) + float2(1.0);
+    texSize *= 0.5;
+    normScreen.y = -normScreen.y;
+    float2 uvGen = (normScreen.xy * texSize) + (texSize * 0.75);
+    uvGen = mix(uvPixel, uvGen, float2(float(_152.material.modes.x == 1)));
+    out.uv = uvGen.xyxy;
+    out.uv *= _152.material.shift;
+    out.uv = (out.uv - (_152.material.shift * 0.5)) - _152.material.low;
+    out.tileSize = abs(_152.material.high) - abs(_152.material.low);
+    if ((_152.material.modes.w & 256) != 0)
+    {
+        float3 _372 = (norm * 0.5) + float3(0.5);
+        out.cc_shade_flat.x = _372.x;
+        out.cc_shade_flat.y = _372.y;
+        out.cc_shade_flat.z = _372.z;
+        out.cc_shade_flat.w = 0.75;
+        out.gl_Position.z -= 9.9999997473787516355514526367188e-05;
+    }
+    return out;
+}
+

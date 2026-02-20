@@ -23,6 +23,23 @@ This will walk your through the process of installing it, most of which is fully
 
 Once that part is done, you now have two new options to either open or create a new project.
 
+## macOS (Apple Silicon)
+
+**Requirements:** An M-series Mac (M1/M2/M3/M4), [Homebrew](https://brew.sh), and Xcode Command Line Tools (`xcode-select --install`).
+
+Download or clone the macOS edition from:
+https://github.com/proverbiallemon/pyrite64-mac
+<br>(Or build from [source](./build_editor.md))
+
+If you downloaded the `.app` from GitHub, right-click it > **Open** on first launch to bypass Gatekeeper (only needed once).<br>
+If you built from source with `./build_app.sh`, this step is not needed.
+
+Open the **Toolchain Manager** and click **Install**.<br>
+This will open a Terminal window that builds the mips64-elf cross-compiler from source, installs libdragon, tiny3d, and the ares emulator. The process takes about 30-60 minutes.<br>
+
+When finished, restart Pyrite64 — all 5 steps in the Toolchain Manager should be green.<br>
+The toolchain is installed to `$HOME/pyrite64-sdk` by default.
+
 <img src="./img/editor01.png" width="450">
 
 ### Creating a new Project

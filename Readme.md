@@ -1,11 +1,12 @@
-# Pyrite64
+# Pyrite64 - macOS Edition
 
 <p align="center">
 <img src="./data/img/titleLogo.png" width="400">
 </p>
 
 <p align="center">
-N64 game-engine and editor using <a href="https://github.com/DragonMinded/libdragon">Libdragon</a> and <a href="https://github.com/HailToDodongo/tiny3d">tiny3d</a>.
+N64 game-engine and editor using <a href="https://github.com/DragonMinded/libdragon">Libdragon</a> and <a href="https://github.com/HailToDodongo/tiny3d">tiny3d</a>.<br/>
+<strong>macOS (Apple Silicon) port</strong> of <a href="https://github.com/HailToDodongo/pyrite64">HailToDodongo/pyrite64</a>.
 </p>
 <br/>
 
@@ -20,33 +21,86 @@ N64 game-engine and editor using <a href="https://github.com/DragonMinded/libdra
 
 > Note: This project does NOT use any proprietary N64 SDKs or libraries.
 
-Pyrite64 is a visual editor + runtime-engine to create 3D games that can run on a real N64 console or accurate emulators.<br>
-Besides the usual editor, some extra features include:
-- Automatic toolchain installation on Windows
-- 3D-Model import (GLTF) from blender with [fast64](https://github.com/Fast-64/fast64) material support.
-- Support for HDR+Bloom rendering (shown here: www.youtube.com/watch?v=XP8g2ngHftY)
-- Support for big-texture rendering (256x256) (shown here: www.youtube.com/watch?v=rNEo0aQkGnU)
-- Runtime engine handling scene-management, rendering, collision, audio and more.
+> [!IMPORTANT]
+> **This fork targets Apple Silicon (M1/M2/M3/M4) Macs only.** Intel Macs are untested and unlikely to work without modifications.
+
+Pyrite64 is a visual editor + runtime-engine to create 3D games that can run on a real N64 console or accurate emulators.
+
+### Features
+
+- Automatic toolchain installation on **Windows and macOS**
+- 3D-Model import (GLTF) from Blender with [fast64](https://github.com/Fast-64/fast64) material support
+- Support for HDR+Bloom rendering ([demo](https://www.youtube.com/watch?v=XP8g2ngHftY))
+- Support for big-texture rendering 256x256 ([demo](https://www.youtube.com/watch?v=rNEo0aQkGnU))
+- Runtime engine handling scene-management, rendering, collision, audio and more
 - Global asset management with automatic memory cleanup
 - Node-Graph editor to script basic control flow
 
-Note that this project focuses on real hardware, so accurate emulation is required to run/test games on PC.<br>
+Note that this project focuses on real hardware, so accurate emulation is required to run/test games on PC.
 Emulators that are accurate enough include [Ares (v147 or newer)](https://ares-emu.net/) and [gopher64](https://github.com/gopher64/gopher64).
 
 > [!WARNING]
 > This project is still in early development, so features are going to be missing.<br>
 > Documentation is also still a work in progress, and breaking API changes are to be expected.
 
+---
+
+### macOS-Specific Additions
+
+This fork adds the following on top of the upstream project:
+
+| Feature | Details |
+|---------|---------|
+| Toolchain install | One-click Install via Homebrew + Terminal.app (~30-60 min build from source) |
+| Toolchain Manager | Detects Homebrew, toolchain, libdragon, tiny3d, and ares across 5 steps |
+| Emulator | Auto-installs [ares](https://ares-emu.net/) via Homebrew, launches with `open -a ares` |
+| SDK path | Defaults to `$HOME/pyrite64-sdk` (no sudo, auto-discovered without `N64_INST`) |
+| App bundle | Pre-built `.app` with ad-hoc code signing via `build_app.sh` |
+
+---
+
+## Requirements
+
+- **macOS on Apple Silicon** (M1 or later)
+- **Homebrew** ([brew.sh](https://brew.sh))
+- **Xcode Command Line Tools** (`xcode-select --install`)
+
+## Quick Start
+
+### Option A: Use the pre-built .app
+
+1. Download or clone this repo
+2. Right-click `Pyrite64.app` > **Open** (first launch only — see Gatekeeper note below)
+3. Open the **Toolchain Manager** and click **Install**
+4. Wait for the Terminal window to finish (~30-60 minutes)
+5. Restart Pyrite64 — all 5 steps should be green
+
+### Option B: Build from source
+
+```bash
+brew install cmake ninja
+cmake --preset macos
+./build_app.sh
+```
+
+Then launch `Pyrite64.app`. No Gatekeeper issues when building locally.
+
+### Gatekeeper Note
+
+If you **downloaded** the `.app` from GitHub, macOS will block it on first launch since it isn't notarized. Either:
+- **Right-click** the .app > **Open** > click **Open** in the dialog, or
+- Run `xattr -cr Pyrite64.app` in Terminal
+
+This only applies to downloaded builds, not when building from source. Only needed once.
+
 ## Documentation
 
 Before starting, please read the [FAQ](./docs/faq.md)!
 
-- Installation & Docs:
-  - [Pyrite64 Installation](./docs/setup_editor.md)
-  - [Using the Editor](./docs/usage_editor.md)
-  - [Using the CLI](./docs/usage_editor.md)
-- Development on the editor itself:
-  - [Building the Editor](./docs/build_editor.md)
+- [Pyrite64 Installation](./docs/setup_editor.md)
+- [Using the Editor](./docs/usage_editor.md)
+- [Using the CLI](./docs/usage_editor.md)
+- [Building the Editor](./docs/build_editor.md)
 
 ## Showcase
 
@@ -58,18 +112,21 @@ Before starting, please read the [FAQ](./docs/faq.md)!
     <img src="https://img.youtube.com/vi/4BCmKnN5eGA/0.jpg" width="250">
 </a>
 <br/>
-Cathode Quest 64 (YouTube) &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; Pyrite64 Release Video &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    
+Cathode Quest 64 (YouTube) &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; Pyrite64 Release Video
 </p>
 
 ## Links
-For anything N64 homebrew related,<br>
-checkout the N64Brew discord: https://discord.gg/WqFgNWf
+
+- N64Brew Discord: https://discord.gg/WqFgNWf
+- Upstream project: [HailToDodongo/pyrite64](https://github.com/HailToDodongo/pyrite64)
 
 ## Credits & License
-© 2025-2026 - Max Bebök (HailToDodongo)<br>
+
+Original project (c) 2025-2026 - Max Bebök ([HailToDodongo](https://github.com/HailToDodongo))<br>
+macOS port by [proverbiallemon](https://github.com/proverbiallemon)
 
 Pyrite64 is licensed under the MIT License, see the [LICENSE](LICENSE) file for more information.<br>
-Licenses for external libraries used in the editor can be found in their respective directory under `/vendored`
+Licenses for external libraries used in the editor can be found in their respective directory under `/vendored`.
 
 Pyrite64 does NOT force any restrictions or licenses on games made with it.<br>
 Pyrite64 does NOT claim any copyright or force licenses for assets / source-code generated by the editor.

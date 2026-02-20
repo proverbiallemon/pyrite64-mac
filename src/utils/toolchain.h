@@ -16,9 +16,11 @@ namespace Utils
       {
         fs::path mingwPath{}; // empty if not found, always empty on linux
         fs::path toolchainPath{}; // empty if not found
+        bool platformReady{}; // true if platform prerequisites are met (MSYS2 on Windows, Homebrew on macOS)
         bool hasToolchain{};
         bool hasLibdragon{};
         bool hasTiny3d{};
+        bool hasEmulator{};
       };
 
     private:

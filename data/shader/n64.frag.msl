@@ -1,0 +1,593 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+#pragma clang diagnostic ignored "-Wmissing-braces"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+template<typename T, size_t Num>
+struct spvUnsafeArray
+{
+    T elements[Num ? Num : 1];
+    
+    thread T& operator [] (size_t pos) thread
+    {
+        return elements[pos];
+    }
+    constexpr const thread T& operator [] (size_t pos) const thread
+    {
+        return elements[pos];
+    }
+    
+    device T& operator [] (size_t pos) device
+    {
+        return elements[pos];
+    }
+    constexpr const device T& operator [] (size_t pos) const device
+    {
+        return elements[pos];
+    }
+    
+    constexpr const constant T& operator [] (size_t pos) const constant
+    {
+        return elements[pos];
+    }
+    
+    threadgroup T& operator [] (size_t pos) threadgroup
+    {
+        return elements[pos];
+    }
+    constexpr const threadgroup T& operator [] (size_t pos) const threadgroup
+    {
+        return elements[pos];
+    }
+};
+
+// Implementation of the GLSL mod() function, which is slightly different than Metal fmod()
+template<typename Tx, typename Ty>
+inline Tx mod(Tx x, Ty y)
+{
+    return x - y * floor(x / y);
+}
+
+struct UBO_Material
+{
+    float4x4 modelMat;
+    int4 blender[2];
+    float4 mask;
+    float4 shift;
+    float4 low;
+    float4 high;
+    int4 cc0Color;
+    int4 cc0Alpha;
+    int4 cc1Color;
+    int4 cc1Alpha;
+    int4 modes;
+    float4 lightColor[2];
+    float4 lightDir[2];
+    float4 colPrim;
+    float4 colEnv;
+    float4 ambientColor;
+    float4 ck_center;
+    float4 ck_scale;
+    float4 primLodDepth;
+    float4 k_0123;
+    float2 k_45;
+    uint objectID;
+};
+
+struct UniformObject
+{
+    UBO_Material material;
+};
+
+struct main0_out
+{
+    float4 FragColor [[color(0)]];
+    uint ObjID [[color(1)]];
+};
+
+struct main0_in
+{
+    float4 uv [[user(locn1)]];
+    uint v_objectID [[user(locn2)]];
+    float4 tileSize [[user(locn3), flat]];
+    float2 posScreen [[user(locn4)]];
+    float4 cc_shade [[user(locn5), center_no_perspective]];
+    float4 cc_shade_flat [[user(locn6), flat]];
+};
+
+static inline __attribute__((always_inline))
+void shaderCollision(thread bool& gl_FrontFacing, thread float4& FragColor, thread float4& cc_shade_flat, thread uint& ObjID, thread uint& v_objectID)
+{
+    if (!gl_FrontFacing)
+    {
+        discard_fragment();
+    }
+    FragColor = float4(cc_shade_flat.xyz + float3(0.25), cc_shade_flat.w);
+    ObjID = v_objectID;
+}
+
+static inline __attribute__((always_inline))
+float4 mirrorUV(thread const float4& uvEnd, thread const float4& uvIn)
+{
+    float4 uvMod2 = mod(uvIn, (uvEnd * 2.0) + float4(1.0));
+    return mix(uvMod2, (uvEnd * 2.0) - uvMod2, step(uvEnd, uvMod2));
+}
+
+static inline __attribute__((always_inline))
+int4 wrappedMirror(thread const int4& texSize, thread int4& uv, constant UniformObject& _126, thread float4& tileSize)
+{
+    float4 mask = abs(_126.material.mask);
+    float4 isClamp = step(_126.material.mask, float4(1.0));
+    float4 isMirror = step(_126.material.high, float4(0.0));
+    float4 isForceClamp = step(mask, float4(1.0));
+    mask = mix(mask, float4(256.0), isForceClamp);
+    int4 _156 = uv;
+    int2 _158 = texSize.yw - _156.yw;
+    uv.y = _158.x;
+    uv.w = _158.y;
+    float4 uvClamp = fast::clamp(float4(uv), float4(0.0), tileSize);
+    uv = int4(mix(float4(uv), uvClamp, isClamp));
+    float4 param = mask - float4(0.5);
+    float4 param_1 = float4(uv);
+    float4 uvMirror = mirrorUV(param, param_1);
+    uv = int4(mix(float4(uv), uvMirror, isMirror));
+    uv = int4(mod(float4(uv), fast::min(float4(texSize + int4(1)), mask)));
+    int4 _207 = uv;
+    int2 _209 = texSize.yw - _207.yw;
+    uv.y = _209.x;
+    uv.w = _209.y;
+    return uv;
+}
+
+static inline __attribute__((always_inline))
+void fetchTex01Filtered(thread const int4& texSize, thread float4& texData0, thread float4& texData1, constant UniformObject& _126, thread float4& tileSize, thread float4& uv, texture2d<float> tex0, sampler tex0Smplr, texture2d<float> tex1, sampler tex1Smplr)
+{
+    int4 uv0 = int4(floor(uv));
+    float4 ratio = uv - float4(uv0);
+    int2 lower_flag = int2(step(float2(1.0), ratio.xz + ratio.yw));
+    int4 corner0 = int4(lower_flag.x, lower_flag.x, lower_flag.y, lower_flag.y);
+    int4 uv1 = uv0 + corner0;
+    int4 uv2 = uv0 + int4(1, 0, 1, 0);
+    uv0 += int4(0, 1, 0, 1);
+    int4 param = texSize;
+    int4 param_1 = uv0;
+    int4 _263 = wrappedMirror(param, param_1, _126, tileSize);
+    uv0 = _263;
+    int4 param_2 = texSize;
+    int4 param_3 = uv1;
+    int4 _268 = wrappedMirror(param_2, param_3, _126, tileSize);
+    uv1 = _268;
+    int4 param_4 = texSize;
+    int4 param_5 = uv2;
+    int4 _273 = wrappedMirror(param_4, param_5, _126, tileSize);
+    uv2 = _273;
+    float4 v0 = float4(int4(0, 1, 0, 1) - corner0);
+    float4 v1 = float4(int4(1, 0, 1, 0) - corner0);
+    float4 v2 = ratio - float4(corner0);
+    float2 den = (v0.xw * v1.yz) - (v1.xw * v0.yz);
+    float2 lambda1 = abs(((v2.xz * v1.yw) - (v1.xz * v2.yw)) / den);
+    float2 lambda2 = abs(((v0.xz * v2.yw) - (v2.xz * v0.yw)) / den);
+    float2 lambda0 = (float2(1.0) - lambda1) - lambda2;
+    texData0 = ((tex0.read(uint2(uv1.xy), 0) * lambda0.x) + (tex0.read(uint2(uv0.xy), 0) * lambda1.x)) + (tex0.read(uint2(uv2.xy), 0) * lambda2.x);
+    texData1 = ((tex1.read(uint2(uv1.zw), 0) * lambda0.y) + (tex1.read(uint2(uv0.zw), 0) * lambda1.y)) + (tex1.read(uint2(uv2.zw), 0) * lambda2.y);
+}
+
+static inline __attribute__((always_inline))
+float3 linearToGamma(thread const float3& color)
+{
+    return mix(color * 12.9200000762939453125, (powr(color, float3(0.4166666567325592041015625)) * 1.05499994754791259765625) - float3(0.054999999701976776123046875), step(float3(0.003130800090730190277099609375), color));
+}
+
+static inline __attribute__((always_inline))
+float _noise(thread const float2& uv)
+{
+    return fract(sin(dot(uv, float2(12.98980045318603515625, 78.233001708984375))) * 43758.546875);
+}
+
+static inline __attribute__((always_inline))
+float3 cc_fetchColor(thread const int& val, thread const float4& shade, thread const float4& comb, thread const float4& texData0, thread const float4& texData1, constant UniformObject& _126, thread float2& posScreen)
+{
+    if (val == 2)
+    {
+        return comb.xyz;
+    }
+    else
+    {
+        if (val == 3)
+        {
+            return texData0.xyz;
+        }
+        else
+        {
+            if (val == 4)
+            {
+                return texData1.xyz;
+            }
+            else
+            {
+                if (val == 5)
+                {
+                    return _126.material.colPrim.xyz;
+                }
+                else
+                {
+                    if (val == 6)
+                    {
+                        return shade.xyz;
+                    }
+                    else
+                    {
+                        if (val == 7)
+                        {
+                            return _126.material.colEnv.xyz;
+                        }
+                        else
+                        {
+                            if (val == 8)
+                            {
+                                return _126.material.ck_center.xyz;
+                            }
+                            else
+                            {
+                                if (val == 9)
+                                {
+                                    return _126.material.ck_scale.xyz;
+                                }
+                                else
+                                {
+                                    if (val == 10)
+                                    {
+                                        return comb.www;
+                                    }
+                                    else
+                                    {
+                                        if (val == 11)
+                                        {
+                                            return texData0.www;
+                                        }
+                                        else
+                                        {
+                                            if (val == 12)
+                                            {
+                                                return texData1.www;
+                                            }
+                                            else
+                                            {
+                                                if (val == 13)
+                                                {
+                                                    return _126.material.colPrim.www;
+                                                }
+                                                else
+                                                {
+                                                    if (val == 14)
+                                                    {
+                                                        float3 param = shade.www;
+                                                        return linearToGamma(param);
+                                                    }
+                                                    else
+                                                    {
+                                                        if (val == 15)
+                                                        {
+                                                            return _126.material.colEnv.www;
+                                                        }
+                                                        else
+                                                        {
+                                                            if (val == 17)
+                                                            {
+                                                                return float3(_126.material.primLodDepth.y);
+                                                            }
+                                                            else
+                                                            {
+                                                                if (val == 18)
+                                                                {
+                                                                    float2 param_1 = posScreen * 0.25;
+                                                                    return float3(_noise(param_1));
+                                                                }
+                                                                else
+                                                                {
+                                                                    if (val == 19)
+                                                                    {
+                                                                        return float3(_126.material.k_45.x);
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        if (val == 20)
+                                                                        {
+                                                                            return float3(_126.material.k_45.y);
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            if (val == 1)
+                                                                            {
+                                                                                return float3(1.0);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return float3(0.0);
+}
+
+static inline __attribute__((always_inline))
+float cc_fetchAlpha(thread const int& val, thread const float4& shade, thread const float4& comb, thread const float4& texData0, thread const float4& texData1, constant UniformObject& _126)
+{
+    if (val == 2)
+    {
+        return comb.w;
+    }
+    else
+    {
+        if (val == 3)
+        {
+            return texData0.w;
+        }
+        else
+        {
+            if (val == 4)
+            {
+                return texData1.w;
+            }
+            else
+            {
+                if (val == 5)
+                {
+                    return _126.material.colPrim.w;
+                }
+                else
+                {
+                    if (val == 6)
+                    {
+                        return shade.w;
+                    }
+                    else
+                    {
+                        if (val == 7)
+                        {
+                            return _126.material.colEnv.w;
+                        }
+                        else
+                        {
+                            if (val == 9)
+                            {
+                                return _126.material.primLodDepth.y;
+                            }
+                            else
+                            {
+                                if (val == 1)
+                                {
+                                    return 1.0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0.0;
+}
+
+static inline __attribute__((always_inline))
+float4 cc_overflowValue(thread const float4& value)
+{
+    return mod(value + float4(0.5), float4(2.0)) - float4(0.5);
+}
+
+static inline __attribute__((always_inline))
+float4 cc_clampValue(thread const float4& value)
+{
+    return fast::clamp(value, float4(0.0), float4(1.0));
+}
+
+fragment main0_out main0(main0_in in [[stage_in]], constant UniformObject& _126 [[buffer(0)]], texture2d<float> tex0 [[texture(0)]], texture2d<float> tex1 [[texture(1)]], sampler tex0Smplr [[sampler(0)]], sampler tex1Smplr [[sampler(1)]], bool gl_FrontFacing [[front_facing]], float4 gl_FragCoord [[position]])
+{
+    main0_out out = {};
+    float4 ccValue = float4(0.0);
+    float4 uvTex = in.uv;
+    if ((_126.material.modes.w & 256) != 0)
+    {
+        shaderCollision(gl_FrontFacing, out.FragColor, in.cc_shade_flat, out.ObjID, in.v_objectID);
+        return out;
+    }
+    bool _702 = (_126.material.modes.w & 16) != 0;
+    bool _707;
+    if (_702)
+    {
+        _707 = !gl_FrontFacing;
+    }
+    else
+    {
+        _707 = _702;
+    }
+    if (_707)
+    {
+        discard_fragment();
+    }
+    float4 ccShade = in.cc_shade;
+    int4 texSize = int4(int2(tex0.get_width(), tex0.get_height()), int2(tex1.get_width(), tex1.get_height())) - int4(1);
+    float4 texData0;
+    float4 texData1;
+    if ((_126.material.modes.z & 8192) == 8192)
+    {
+        int4 param = texSize;
+        float4 param_1;
+        float4 param_2;
+        fetchTex01Filtered(param, param_1, param_2, _126, in.tileSize, in.uv, tex0, tex0Smplr, tex1, tex1Smplr);
+        texData0 = param_1;
+        texData1 = param_2;
+    }
+    else
+    {
+        int4 uv0 = int4(floor(in.uv + float4(0.5)));
+        int4 param_3 = texSize;
+        int4 param_4 = uv0;
+        int4 _755 = wrappedMirror(param_3, param_4, _126, in.tileSize);
+        uv0 = _755;
+        texData0 = tex0.read(uint2(uv0.xy), 0);
+        texData1 = tex1.read(uint2(uv0.zw), 0);
+    }
+    int param_5 = _126.material.cc0Color.x;
+    float4 param_6 = ccShade;
+    float4 param_7 = ccValue;
+    float4 param_8 = texData0;
+    float4 param_9 = texData1;
+    float3 _781 = cc_fetchColor(param_5, param_6, param_7, param_8, param_9, _126, in.posScreen);
+    spvUnsafeArray<float4, 4> cc0;
+    cc0[0].x = _781.x;
+    cc0[0].y = _781.y;
+    cc0[0].z = _781.z;
+    int param_10 = _126.material.cc0Color.y;
+    float4 param_11 = ccShade;
+    float4 param_12 = ccValue;
+    float4 param_13 = texData0;
+    float4 param_14 = texData1;
+    float3 _799 = cc_fetchColor(param_10, param_11, param_12, param_13, param_14, _126, in.posScreen);
+    cc0[1].x = _799.x;
+    cc0[1].y = _799.y;
+    cc0[1].z = _799.z;
+    int param_15 = _126.material.cc0Color.z;
+    float4 param_16 = ccShade;
+    float4 param_17 = ccValue;
+    float4 param_18 = texData0;
+    float4 param_19 = texData1;
+    float3 _817 = cc_fetchColor(param_15, param_16, param_17, param_18, param_19, _126, in.posScreen);
+    cc0[2].x = _817.x;
+    cc0[2].y = _817.y;
+    cc0[2].z = _817.z;
+    int param_20 = _126.material.cc0Color.w;
+    float4 param_21 = ccShade;
+    float4 param_22 = ccValue;
+    float4 param_23 = texData0;
+    float4 param_24 = texData1;
+    float3 _835 = cc_fetchColor(param_20, param_21, param_22, param_23, param_24, _126, in.posScreen);
+    cc0[3].x = _835.x;
+    cc0[3].y = _835.y;
+    cc0[3].z = _835.z;
+    int param_25 = _126.material.cc0Alpha.x;
+    float4 param_26 = ccShade;
+    float4 param_27 = ccValue;
+    float4 param_28 = texData0;
+    float4 param_29 = texData1;
+    cc0[0].w = cc_fetchAlpha(param_25, param_26, param_27, param_28, param_29, _126);
+    int param_30 = _126.material.cc0Alpha.y;
+    float4 param_31 = ccShade;
+    float4 param_32 = ccValue;
+    float4 param_33 = texData0;
+    float4 param_34 = texData1;
+    cc0[1].w = cc_fetchAlpha(param_30, param_31, param_32, param_33, param_34, _126);
+    int param_35 = _126.material.cc0Alpha.z;
+    float4 param_36 = ccShade;
+    float4 param_37 = ccValue;
+    float4 param_38 = texData0;
+    float4 param_39 = texData1;
+    cc0[2].w = cc_fetchAlpha(param_35, param_36, param_37, param_38, param_39, _126);
+    int param_40 = _126.material.cc0Alpha.w;
+    float4 param_41 = ccShade;
+    float4 param_42 = ccValue;
+    float4 param_43 = texData0;
+    float4 param_44 = texData1;
+    cc0[3].w = cc_fetchAlpha(param_40, param_41, param_42, param_43, param_44, _126);
+    float4 param_45 = ((cc0[0] - cc0[1]) * cc0[2]) + cc0[3];
+    ccValue = cc_overflowValue(param_45);
+    if ((_126.material.modes.z & 1048576) != 0)
+    {
+        int param_46 = _126.material.cc1Color.x;
+        float4 param_47 = ccShade;
+        float4 param_48 = ccValue;
+        float4 param_49 = texData0;
+        float4 param_50 = texData1;
+        float3 _926 = cc_fetchColor(param_46, param_47, param_48, param_49, param_50, _126, in.posScreen);
+        spvUnsafeArray<float4, 4> cc1;
+        cc1[0].x = _926.x;
+        cc1[0].y = _926.y;
+        cc1[0].z = _926.z;
+        int param_51 = _126.material.cc1Color.y;
+        float4 param_52 = ccShade;
+        float4 param_53 = ccValue;
+        float4 param_54 = texData0;
+        float4 param_55 = texData1;
+        float3 _944 = cc_fetchColor(param_51, param_52, param_53, param_54, param_55, _126, in.posScreen);
+        cc1[1].x = _944.x;
+        cc1[1].y = _944.y;
+        cc1[1].z = _944.z;
+        int param_56 = _126.material.cc1Color.z;
+        float4 param_57 = ccShade;
+        float4 param_58 = ccValue;
+        float4 param_59 = texData0;
+        float4 param_60 = texData1;
+        float3 _962 = cc_fetchColor(param_56, param_57, param_58, param_59, param_60, _126, in.posScreen);
+        cc1[2].x = _962.x;
+        cc1[2].y = _962.y;
+        cc1[2].z = _962.z;
+        int param_61 = _126.material.cc1Color.w;
+        float4 param_62 = ccShade;
+        float4 param_63 = ccValue;
+        float4 param_64 = texData0;
+        float4 param_65 = texData1;
+        float3 _980 = cc_fetchColor(param_61, param_62, param_63, param_64, param_65, _126, in.posScreen);
+        cc1[3].x = _980.x;
+        cc1[3].y = _980.y;
+        cc1[3].z = _980.z;
+        int param_66 = _126.material.cc1Alpha.x;
+        float4 param_67 = ccShade;
+        float4 param_68 = ccValue;
+        float4 param_69 = texData0;
+        float4 param_70 = texData1;
+        cc1[0].w = cc_fetchAlpha(param_66, param_67, param_68, param_69, param_70, _126);
+        int param_71 = _126.material.cc1Alpha.y;
+        float4 param_72 = ccShade;
+        float4 param_73 = ccValue;
+        float4 param_74 = texData0;
+        float4 param_75 = texData1;
+        cc1[1].w = cc_fetchAlpha(param_71, param_72, param_73, param_74, param_75, _126);
+        int param_76 = _126.material.cc1Alpha.z;
+        float4 param_77 = ccShade;
+        float4 param_78 = ccValue;
+        float4 param_79 = texData0;
+        float4 param_80 = texData1;
+        cc1[2].w = cc_fetchAlpha(param_76, param_77, param_78, param_79, param_80, _126);
+        int param_81 = _126.material.cc1Alpha.w;
+        float4 param_82 = ccShade;
+        float4 param_83 = ccValue;
+        float4 param_84 = texData0;
+        float4 param_85 = texData1;
+        cc1[3].w = cc_fetchAlpha(param_81, param_82, param_83, param_84, param_85, _126);
+        ccValue = ((cc1[0] - cc1[1]) * cc1[2]) + cc1[3];
+    }
+    float4 param_86 = ccValue;
+    float4 param_87 = cc_overflowValue(param_86);
+    ccValue = cc_clampValue(param_87);
+    int2 screenPosPixel = int2(trunc(gl_FragCoord.xy));
+    int currDepth = int(mix(gl_FragCoord.w * 1048575.0, _126.material.primLodDepth.z, float((_126.material.modes.y & 4) == 4)));
+    int writeDepth = currDepth;
+    bool alphaTestFailed = ccValue.w < _126.material.lightDir[0].w;
+    if (alphaTestFailed)
+    {
+        writeDepth = -16777215;
+    }
+    if (alphaTestFailed)
+    {
+        discard_fragment();
+    }
+    out.FragColor = float4(ccValue.xyz, ccValue.w);
+    out.ObjID = in.v_objectID;
+    return out;
+}
+

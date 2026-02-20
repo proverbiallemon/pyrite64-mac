@@ -46,6 +46,37 @@ void Utils::Toolchain::scan()
                     && fs::exists(state.toolchainPath / "include" / "t3d.mk")
                     && fs::exists(state.toolchainPath / "mips64-elf" / "include" / "t3d");
 
+    state.platformReady = !state.mingwPath.empty();
+    // @TODO: detect ares on Windows
+
+  #elif defined(__APPLE__)
+    // Check for Homebrew
+    state.platformReady = fs::exists("/opt/homebrew/bin/brew") || fs::exists("/usr/local/bin/brew");
+
+    const char* n64InstEnv = std::getenv("N64_INST");
+    if(n64InstEnv) {
+      state.toolchainPath = fs::path{n64InstEnv};
+    } else {
+      const char* homeDir = std::getenv("HOME");
+      if(homeDir) {
+        state.toolchainPath = fs::path{homeDir} / "pyrite64-sdk";
+      }
+    }
+    if(state.toolchainPath.empty())return;
+
+    state.hasToolchain = fs::exists(state.toolchainPath / "bin" / "mips64-elf-gcc")
+                       && fs::exists(state.toolchainPath / "bin" / "mips64-elf-g++");
+
+    state.hasLibdragon = fs::exists(state.toolchainPath / "bin" / "n64tool")
+                       && fs::exists(state.toolchainPath / "bin" / "mkdfs")
+                       && fs::exists(state.toolchainPath / "include" / "n64.mk");
+
+    state.hasTiny3d = fs::exists(state.toolchainPath / "bin" / "gltf_to_t3d")
+                    && fs::exists(state.toolchainPath / "include" / "t3d.mk")
+                    && fs::exists(state.toolchainPath / "mips64-elf" / "include" / "t3d");
+
+    state.hasEmulator = fs::exists("/Applications/ares.app");
+
   #else
     char* n64InstEnv = getenv("N64_INST");
     if(n64InstEnv) {
@@ -100,8 +131,33 @@ void Utils::Toolchain::install()
 
   installing.store(true);
   bool isInstalled = state.hasToolchain && state.hasLibdragon && state.hasTiny3d;
-  std::thread installThread(runInstallScript, state.mingwPath, isInstalled);
-  installThread.detach();
+
+  #if defined(__APPLE__)
+    fs::path selfPath{Utils::Proc::getSelfPath()};
+    selfPath = selfPath.parent_path();
+    fs::path scriptPath = selfPath / "data" / "scripts" / "macos_create_env.sh";
+
+    if (!fs::exists(scriptPath)) {
+      printf("Error: macOS install script not found at: %s\n", scriptPath.string().c_str());
+      installing.store(false);
+      return;
+    }
+
+    std::string envVars = "export N64_INST='" + state.toolchainPath.string() + "'; ";
+    if (isInstalled) envVars += "export FORCE_UPDATE=true; ";
+
+    std::string escapedCmd = envVars + "bash '" + scriptPath.string() + "'";
+    // Escape backslashes and double-quotes for AppleScript string
+    std::string asCmd = "tell application \"Terminal\" to do script \"" + escapedCmd + "\"";
+    std::string command = "osascript -e '" + asCmd + "'";
+
+    auto res = Utils::Proc::runSync(command);
+    printf("Res: %s : %s\n", command.c_str(), res.c_str());
+    installing.store(false);
+  #else
+    std::thread installThread(runInstallScript, state.mingwPath, isInstalled);
+    installThread.detach();
+  #endif
 }
 
 bool Utils::Toolchain::isInstalling()

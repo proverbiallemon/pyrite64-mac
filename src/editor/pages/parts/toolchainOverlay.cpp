@@ -17,8 +17,8 @@ namespace
   constexpr ImVec4 STEP_INACTIVE = ImVec4(0.1f, 0.1f, 0.1f, 1.0f);
 
 
-  constexpr ImVec2 BUTTON_SIZE = ImVec2(110, 90);
-  constexpr float BUTTON_SPACING = 50.0f;
+  constexpr ImVec2 BUTTON_SIZE = ImVec2(100, 90);
+  constexpr float BUTTON_SPACING = 40.0f;
   constinit int checkTimer = 0;
 
   std::string projectName{};
@@ -76,13 +76,18 @@ bool Editor::ToolchainOverlay::draw()
 {
   #if defined(_WIN32)
     constexpr bool isWindows = true;
+    constexpr bool isMacOS = false;
+  #elif defined(__APPLE__)
+    constexpr bool isWindows = false;
+    constexpr bool isMacOS = true;
   #else
     constexpr bool isWindows = false;
+    constexpr bool isMacOS = false;
   #endif
 
   ImGuiIO &io = ImGui::GetIO();
   ImGui::SetNextWindowPos({io.DisplaySize.x / 2, io.DisplaySize.y / 2}, ImGuiCond_Always, {0.5f, 0.5f});
-  ImGui::SetNextWindowSize({800, 400}, ImGuiCond_Always);
+  ImGui::SetNextWindowSize({850, 400}, ImGuiCond_Always);
 
   if (ImGui::BeginPopupModal("Toolchain", nullptr,
     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
@@ -109,16 +114,18 @@ bool Editor::ToolchainOverlay::draw()
     ImGui::Dummy({0, 10});
 
     constexpr const char *STEPS[] = {
-      isWindows ? "MSYS2" : "N64_INST",
+      isWindows ? "MSYS2" : (isMacOS ? "Homebrew" : "N64_INST"),
       "Toolchain",
       "Libdragon",
-      "Tiny3D"
+      "Tiny3D",
+      "Emulator"
     };
     bool STEP_DONE[] = {
-      !toolState.mingwPath.empty(),
+      toolState.platformReady,
       toolState.hasToolchain,
       toolState.hasLibdragon,
-      toolState.hasTiny3d
+      toolState.hasTiny3d,
+      toolState.hasEmulator
     };
     constexpr int steps = std::size(STEPS);
 
@@ -127,10 +134,10 @@ bool Editor::ToolchainOverlay::draw()
       (ImGui::GetWindowWidth() - contentWidth) * 0.5f,
       ImGui::GetCursorPosY() + 40
     };
-    
+
     bool allDone = true;
-    for (int i = 0; i < 4; i++) {
-      drawStep(startPos, STEPS[i], STEP_DONE[i], i < 3);
+    for (int i = 0; i < steps; i++) {
+      drawStep(startPos, STEPS[i], STEP_DONE[i], i < (steps - 1));
       allDone = allDone && STEP_DONE[i];
     }
 
@@ -161,6 +168,26 @@ bool Editor::ToolchainOverlay::draw()
           ImGui::SetCursorPosX(posX);
           ImGui::Text("During the installation, keep the default path as is at \"C:\\msys64\".");
         }
+      } else if(isMacOS)
+      {
+        if(allDone) {
+          ImGui::Text(
+            "Toolchain found in: %s\n"
+            "The N64 toolchain is correctly installed.\n"
+            "If you wish to update it, press the update button below.",
+            ctx.toolchain.getState().toolchainPath.string().c_str()
+          );
+        } else if(STEP_DONE[0]) {
+          ImGui::Text(
+            "Click Install to automatically build the N64 toolchain.\n"
+            "This will open a Terminal window.\n"
+            "The build takes 30-60 minutes."
+          );
+        } else {
+          ImGui::Text("Homebrew is required but was not found.\nInstall it from the link below, then restart Pyrite64:");
+          ImGui::SetCursorPosX(posX);
+          ImGui::TextLinkOpenURL("https://brew.sh", "https://brew.sh");
+        }
       } else
       {
         if(allDone) {
@@ -169,7 +196,7 @@ bool Editor::ToolchainOverlay::draw()
         {
           ImGui::Text(
             "The N64 toolchain is missing or not properly installed.\n"
-            "Automatic installation is currently only available on Windows.\n"
+            "Automatic installation is currently only available on Windows and macOS.\n"
             "Please follow the guide for libdragon and tiny3d here:\n"
           );
 
@@ -195,7 +222,7 @@ bool Editor::ToolchainOverlay::draw()
         ImGui::GetCursorPosY() + 20
       });
 
-      if(STEP_DONE[0] && isWindows) {
+      if(STEP_DONE[0] && (isWindows || isMacOS)) {
         if (ImGui::Button(allDone ? "Update" : "Install", {150, 40})) {
           ctx.toolchain.install();
         }

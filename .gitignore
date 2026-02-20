@@ -9,3 +9,6 @@ pyrite64
 *.pak
 pyrite64.exe
 *.dll
+.docs/
+Pyrite64.app/
+.DS_Store

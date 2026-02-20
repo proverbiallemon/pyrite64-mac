@@ -113,7 +113,14 @@ namespace Editor::Actions
 
       std::string runCmd{};
       if (arg == "run") {
+      #if defined(__APPLE__)
+        // On macOS, use 'open -a' to launch .app bundles properly
+        std::string emuCmd = ctx.project->conf.pathEmu;
+        if (emuCmd == "ares") emuCmd = "open -a ares";
+        runCmd = emuCmd + " " + z64Path;
+      #else
         runCmd = ctx.project->conf.pathEmu + " " + z64Path;
+      #endif
       }
 
       ctx.futureBuildRun = std::async(std::launch::async, [] (std::string configPath, std::string runCmd)

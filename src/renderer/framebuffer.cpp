@@ -68,7 +68,11 @@ void Renderer::Framebuffer::resize(uint32_t width, uint32_t height)
   gpuTexObj = SDL_CreateGPUTexture(ctx.gpu, &texInfo);
 
   texInfo.type = SDL_GPU_TEXTURETYPE_2D;
+#ifdef __APPLE__
+  texInfo.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
+#else
   texInfo.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
+#endif
   texInfo.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
   gpuTexDepth = SDL_CreateGPUTexture(ctx.gpu, &texInfo);
 
