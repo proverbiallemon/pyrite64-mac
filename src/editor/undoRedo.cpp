@@ -4,7 +4,6 @@
 */
 #include "undoRedo.h"
 #include "../context.h"
-#include "imgui.h"
 
 namespace
 {
@@ -24,13 +23,9 @@ namespace Editor::UndoRedo
     if (!snapshotScene) return false;
     snapshotScene->deserialize(prevCmd->state);
 
-    ctx.selObjectUUID = 0;
-    for (auto &selUUID : prevCmd->selection) {
-      if (snapshotScene->getObjectByUUID(selUUID)) {
-        ctx.selObjectUUID = selUUID;
-        break; // @TODO: change with multi-selection support
-      }
-    }
+    uint32_t primarySel = prevCmd->selection.empty() ? 0 : prevCmd->selection.back();
+    ctx.setObjectSelectionList(prevCmd->selection, primarySel);
+    ctx.sanitizeObjectSelection(snapshotScene);
 
     redoStack.push_back(std::move(cmd));
     
@@ -46,7 +41,10 @@ namespace Editor::UndoRedo
 
     if (!snapshotScene) return false;
     snapshotScene->deserialize(cmd->state);
-    ctx.selObjectUUID = snapshotScene->getObjectByUUID(cmd->selection[0]) ? cmd->selection[0] : 0;
+
+    uint32_t primarySel = cmd->selection.empty() ? 0 : cmd->selection.back();
+    ctx.setObjectSelectionList(cmd->selection, primarySel);
+    ctx.sanitizeObjectSelection(snapshotScene);
 
     undoStack.push_back(std::move(cmd));
 
@@ -59,7 +57,7 @@ namespace Editor::UndoRedo
     redoStack.clear();
     nextChangedReason.clear();
     snapshotScene = nullptr;
-    snapshotSelUUID = 0;
+    snapshotSelUUIDs.clear();
   }
 
   void History::begin() {
@@ -69,14 +67,14 @@ namespace Editor::UndoRedo
     if (undoStack.empty()) {
       // If this is the first change, we need to save the initial state of the scene
       std::string initialState = scene->serialize(true);
-      std::vector<uint32_t> ids{};
+      auto ids = ctx.selObjectUUIDs;
       undoStack.push_back(std::make_unique<Entry>(
         std::move(initialState), "Initial State", ids
       ));
     }
 
     snapshotScene = scene;
-    snapshotSelUUID = ctx.selObjectUUID;
+    snapshotSelUUIDs = ctx.selObjectUUIDs;
   }
 
   void History::end() {
@@ -89,9 +87,12 @@ namespace Editor::UndoRedo
       return;
     }
 
+    if (!undoStack.empty()) {
+      undoStack.back()->selection = snapshotSelUUIDs;
+    }
+
     redoStack.clear();
-    std::vector<uint32_t> ids{};
-    ids.push_back(ctx.selObjectUUID);
+    auto ids = ctx.selObjectUUIDs;
 
     auto newEntry = std::make_unique<Entry>(
       scene->serialize(true),
@@ -103,7 +104,8 @@ namespace Editor::UndoRedo
 
     if (!undoStack.empty()) {
       // check against last state to avoid pushing duplicate states
-      if (undoStack.back()->state == newEntry->state) {
+      if (undoStack.back()->state == newEntry->state
+          && undoStack.back()->selection == newEntry->selection) {
         return;
       }
     }
