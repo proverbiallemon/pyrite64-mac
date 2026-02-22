@@ -57,16 +57,8 @@ bool Build::buildProject(const std::string &configPath)
 
   if(project.conf.pathN64Inst.empty())
   {
-    // read env
-  #if defined(_WIN32)
-    /*char* n64InstEnv = nullptr;
-    size_t envSize = 0;
-    if(_dupenv_s(&n64InstEnv, &envSize, "N64_INST") == 0 && n64InstEnv != nullptr) {
-      project.conf.pathN64Inst = n64InstEnv;
-      free(n64InstEnv);
-    }*/
-   project.conf.pathN64Inst = "/pyrite64-sdk";
-  #elif defined(__APPLE__)
+    // read N64_INST from environment
+  #if defined(__APPLE__)
     char* n64InstEnv = getenv("N64_INST");
     if(n64InstEnv != nullptr) {
       project.conf.pathN64Inst = n64InstEnv;
@@ -81,6 +73,12 @@ bool Build::buildProject(const std::string &configPath)
     if(n64InstEnv != nullptr) {
       project.conf.pathN64Inst = n64InstEnv;
     }
+  // On Windows, fall back to pyrite64-sdk (autoinstaller location) if not explicitly set by the user.
+  #if defined(_WIN32)
+    else {
+      project.conf.pathN64Inst = "/pyrite64-sdk";
+    }
+  #endif
   #endif
   } else {
   #if defined(_WIN32)
@@ -212,7 +210,7 @@ bool Build::buildProject(const std::string &configPath)
       {"{{PROJECT_NAME}}",      project.conf.name},
       {"{{ASSET_LIST}}",        Utils::join(filesSorted, " ")},
       {"{{USER_CODE_DIRS}}",    userCodeRules},
-      {"{{P64_SELF_PATH}}",     Utils::Proc::getSelfPath()},
+      {"{{P64_SELF_PATH}}",     Utils::Proc::getSelfPath().string()},
       {"{{PROJECT_SELF_PATH}}", fs::absolute(configPath).string()},
     }
   );

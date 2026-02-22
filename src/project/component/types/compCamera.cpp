@@ -9,6 +9,7 @@
 #include "../../../utils/jsonBuilder.h"
 #include "../../../utils/binaryFile.h"
 #include "../../../utils/logger.h"
+#include "../../../utils/colors.h"
 #include "../../assetManager.h"
 #include "../../../editor/pages/parts/viewport3D.h"
 #include "../../../renderer/scene.h"
@@ -123,6 +124,8 @@ namespace Project::Component::Camera
 
     auto pos = obj.pos.resolve(obj);
 
+    bool isSelected = ctx.isObjectSelected(obj.uuid);
+
     // calculate frustum corners in world space
     float fovY = glm::radians(data.fov.resolve(obj));
     float aspect = data.aspect.resolve(obj);
@@ -159,7 +162,7 @@ namespace Project::Component::Camera
     glm::vec3 fbr = fc - (up * (farHeight/2.0f)) + (right * (farWidth/2.0f));
 
     // Draw frustum edges
-    glm::u8vec4 col{0xFF};
+    glm::u8vec4 col = isSelected ? Utils::Colors::kSelectionTint : glm::u8vec4{0xFF};
     // Near plane
     Utils::Mesh::addLine(*vp.getLines(), ntl, ntr, col);
     Utils::Mesh::addLine(*vp.getLines(), ntr, nbr, col);
@@ -196,6 +199,7 @@ namespace Project::Component::Camera
     Utils::Mesh::addLine(*vp.getLines(), camPos, nbl, col);
     Utils::Mesh::addLine(*vp.getLines(), camPos, nbr, col);
 
-    Utils::Mesh::addSprite(*vp.getSprites(), pos, obj.uuid, 3, glm::u8vec4{0xFF});
+    auto spriteCol = isSelected ? Utils::Colors::kSelectionTint : glm::u8vec4{0xFF};
+    Utils::Mesh::addSprite(*vp.getSprites(), pos, obj.uuid, 3, spriteCol);
   }
 }
