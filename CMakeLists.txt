@@ -119,7 +119,10 @@ add_executable(pyrite64 src/main.cpp
         src/editor/actions.cpp
         src/editor/undoRedo.h
         src/editor/undoRedo.cpp
+        src/editor/selectionUtils.h
+        src/editor/selectionUtils.cpp
         src/utils/json.h
+        src/utils/colors.h
         src/editor/imgui/theme.h
         src/editor/imgui/theme.cpp
         src/editor/imgui/helper.h
@@ -275,4 +278,26 @@ if(MINGW)
         -static-libstdc++
         --static
     )
+endif()
+
+# Install rules for Linux
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Install the executable to $HOME/.local/bin
+    install(TARGETS pyrite64 RUNTIME DESTINATION bin)
+
+    # Install the directories with data needed at runtime to $HOME/.local/share/pyrite64
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data"
+        DESTINATION share/pyrite64)
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/n64"
+        DESTINATION share/pyrite64)
+
+    # Install the desktop entry file to the appropriate location to get integration with desktop environment launcher such as KDE Application Launcher
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/desktop.file"
+        DESTINATION share/applications
+        RENAME pyrite64.desktop)
+
+    # Install the icon to the appropriate location for the desktop entry file to find it
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data/img/windowIcon.png"
+        DESTINATION share/icons/hicolor/256x256/apps
+        RENAME pyrite64.png)
 endif()

@@ -1,3 +1,13 @@
+# v0.3.0
+- Editor:
+  - Multi-Selection support:
+    - Click and drag left mouse to multi-select objects
+    - Hold "CTRL" to add to selection
+    - Transform tools can be used on multiple objects at once
+  - Focus objects by pressing "F"
+  - Orbit objects by holding "ALT" and left-clicking
+  - 3D axis-gizmo label and orientation fixes 
+
 # v0.2.0
 - Toolchain-Manager:
   - fixed build failure if MSYS2 home path contains spaces

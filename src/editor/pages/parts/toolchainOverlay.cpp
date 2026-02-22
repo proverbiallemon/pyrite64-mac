@@ -191,7 +191,11 @@ bool Editor::ToolchainOverlay::draw()
       } else
       {
         if(allDone) {
-          ImGui::Text("The N64 toolchain is correctly installed.");
+          ImGui::Text(
+            "Toolchain found in: %s\n"
+            "The N64 toolchain is correctly installed.\n",
+            ctx.toolchain.getState().toolchainPath.string().c_str()
+          );
         } else
         {
           ImGui::Text(
