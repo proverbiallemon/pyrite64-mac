@@ -103,18 +103,22 @@ Project::Project::Project(const std::string &p64projPath)
   //printf("Engine files sync took %.2f ms\n", t / 1e6);
 
   deserialize(configJSON);
+  savedState = conf.serialize();
   assets.reload();
   scenes.reload();
 }
 
 void Project::Project::saveConfig()
 {
-  Utils::FS::saveTextFile(pathConfig, conf.serialize());
+  auto serializedConfig = conf.serialize();
+  Utils::FS::saveTextFile(pathConfig, serializedConfig);
+  savedState = serializedConfig;
 }
 
 void Project::Project::save() {
   saveConfig();
   assets.save();
   scenes.save();
+  markSaved();
 }
 

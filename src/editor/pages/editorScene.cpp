@@ -202,7 +202,10 @@ void Editor::Scene::draw()
     {
       if(ImGui::BeginMenu("Project"))
       {
-        if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE_OUTLINE " Save"))ctx.project->save();
+        if(ImGui::MenuItem(ICON_MDI_CONTENT_SAVE_OUTLINE " Save")) {
+          ctx.project->save();
+          save();
+        }
         if(ImGui::MenuItem(ICON_MDI_COG " Settings"))projectSettingsOpen = true;
         if(ImGui::MenuItem(ICON_MDI_CLOSE " Close"))Actions::call(Actions::Type::PROJECT_CLOSE);
         ImGui::EndMenu();
@@ -317,4 +320,5 @@ void Editor::Scene::save()
   for(auto &nodeEditor : nodeEditors) {
     nodeEditor->save();
   }
+  UndoRedo::getHistory().markSaved();
 }
