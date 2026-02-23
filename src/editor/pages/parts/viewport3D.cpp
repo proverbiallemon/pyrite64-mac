@@ -34,8 +34,8 @@ namespace
   constinit bool overRotGizmo = false;
 
   // A toggleable "connected" button (like in toolbars)
-bool ConnectedToggleButton(const char* text, bool active, bool first, bool last, ImVec2 size = ImVec2(20, 20))
-{
+  bool ConnectedToggleButton(const char* text, bool active, bool first, bool last, ImVec2 size = ImVec2(20, 20))
+  {
     ImGuiStyle& style = ImGui::GetStyle();
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
@@ -104,7 +104,7 @@ bool ConnectedToggleButton(const char* text, bool active, bool first, bool last,
     if (!last) ImGui::SameLine(0, 0);
 
     return pressed;
-}
+  }
 
   std::shared_ptr<Renderer::Texture> sprites{};
   uint32_t spritesRefCount{0};
@@ -130,6 +130,22 @@ bool ConnectedToggleButton(const char* text, bool active, bool first, bool last,
       callback(*child, nullptr);
 
       iterateObjects(*child, callback);
+    }
+  }
+
+  void applyDeltaToChildren(
+    Project::Object &obj,
+    const std::unordered_map<uint64_t, glm::vec3> &relPosMap,
+    const glm::mat4 &mat
+  ) {
+    for(auto& child : obj.children)
+    {
+      // if child itself is selected, skip (already transformed with it)
+      if(ctx.isObjectSelected(child->uuid))continue;
+
+      auto it = relPosMap.find(child->uuid);
+      if(it == relPosMap.end())continue;
+      child->pos.resolve(child->propOverrides) = mat * glm::vec4(it->second, 1.0f);
     }
   }
 }
@@ -559,9 +575,14 @@ void Editor::Viewport3D::draw()
       auto prefab = ctx.project->getAssets().getPrefabByUUID(prefabUUID);
       if(prefab) {
         UndoRedo::getHistory().markChanged("Add Prefab");
-        auto added = scene->addPrefabInstance(prefabUUID);
-        if (added) {
-          ctx.setObjectSelection(added->uuid);
+        auto newObj = scene->addPrefabInstance(prefabUUID);
+        if (newObj) {
+          // place in front of camera view
+          glm::vec3 camForward = camera.rot * glm::vec3{0,0,-1};
+          glm::vec3 camPos = camera.pos;
+          newObj->pos.resolve(newObj->propOverrides) = camPos + camForward * 150.0f;
+
+          ctx.setObjectSelection(newObj->uuid);
         }
       }
     }
@@ -691,12 +712,7 @@ void Editor::Viewport3D::draw()
 
             if(!isOnlySelf)
             {
-              for(auto& child : obj->children)
-              {
-                auto it = relPosMap.find(child->uuid);
-                if(it == relPosMap.end())continue;
-                child->pos.resolve(child->propOverrides) = gizmoMat * glm::vec4(it->second, 1.0f);
-              }
+              applyDeltaToChildren(*obj, relPosMap, gizmoMat);
             }
           }
         } else {
@@ -758,12 +774,7 @@ void Editor::Viewport3D::draw()
               if(!isOnlySelf)
               {
                 auto newObjMat = glm::recompose(objScale, objRot, objPos, skew, persp);
-                for(auto& child : selObj->children)
-                {
-                  auto it = relPosMap.find(child->uuid);
-                  if(it == relPosMap.end())continue;
-                  child->pos.resolve(child->propOverrides) = newObjMat * glm::vec4(it->second, 1.0f);
-                }
+                applyDeltaToChildren(*selObj, relPosMap, newObjMat);
               }
             }
           } else {
@@ -806,14 +817,8 @@ void Editor::Viewport3D::draw()
                 skew, persp
               );
 
-              if(!isOnlySelf)
-              {
-                for(auto& child : selObj->children)
-                {
-                  auto it = relPosMap.find(child->uuid);
-                  if(it == relPosMap.end())continue;
-                  child->pos.resolve(child->propOverrides) = newObjMat * glm::vec4(it->second, 1.0f);
-                }
+              if(!isOnlySelf) {
+                applyDeltaToChildren(*selObj, relPosMap, newObjMat);
               }
             }
           }
