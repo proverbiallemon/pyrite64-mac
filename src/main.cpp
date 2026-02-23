@@ -316,10 +316,11 @@ int main(int argc, char** argv)
         }
       }
     }
-  }
 
-  // needs to be destroyed before GPU teardown
-  ctx.editorScene.reset();
+    // destroy editorScene while Renderer::Scene is still alive
+    // (Viewport3D destructor needs ctx.scene to remove render passes)
+    ctx.editorScene.reset();
+  }
 
   SDL_WaitForGPUIdle(ctx.gpu);
 
