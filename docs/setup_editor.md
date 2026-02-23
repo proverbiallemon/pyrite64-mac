@@ -21,6 +21,11 @@ On the first start you will see a message that it could not find any N64 toolcha
 By clicking on the "Install Toolchain" button you can open the toolchain manager.<br>
 This will walk your through the process of installing it, most of which is fully automated.<br>
 
+> [!TIP]
+> If you have trouble with broken zip files or certificate errors during the toolchain installation,<br>
+> consider disabling your anti-virus for msys2.<br>
+> There are known issues, e.g. <https://github.com/msys2/MSYS2-packages/issues/5476#issuecomment-3065079993>
+
 Once that part is done, you now have two new options to either open or create a new project.
 
 <img src="./img/editor01.png" width="450">
