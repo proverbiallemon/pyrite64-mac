@@ -131,9 +131,8 @@ void Utils::Toolchain::install()
   bool isInstalled = state.hasToolchain && state.hasLibdragon && state.hasTiny3d;
 
   #if defined(__APPLE__)
-    fs::path selfPath{Utils::Proc::getSelfPath()};
-    selfPath = selfPath.parent_path();
-    fs::path scriptPath = selfPath / "data" / "scripts" / "macos_create_env.sh";
+    fs::path dataRoot{Utils::Proc::getDataRoot()};
+    fs::path scriptPath = dataRoot / "data" / "scripts" / "macos_create_env.sh";
 
     if (!fs::exists(scriptPath)) {
       printf("Error: macOS install script not found at: %s\n", scriptPath.string().c_str());
