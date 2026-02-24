@@ -1,18 +1,26 @@
 # v0.3.0
 - Editor - General
   - Auto-Save before build & run
-  - Instantiating prefabs now places them in front of camera   
+  - Instantiating prefabs now places them in front of camera
+  - Fix issue where adding new scripts could temp. mess up asset associations during build
+  - Opus audio now working
+  - New ROM Inspector for asset sizes (by [@proverbiallemon](https://www.github.com/proverbiallemon), #100)
+  - Show Project state in title and ask before exiting with unsaved changes (by  [@Byterset](https://www.github.com/Byterset), #103)
 - Editor - Viewport:
-  - Multi-Selection support:
+  - Multi-Selection support: (by  [@Byterset](https://www.github.com/Byterset), #7)
     - Click and drag left mouse to multi-select objects
     - Hold "CTRL" to add to selection
     - Transform tools can be used on multiple objects at once
-  - Focus objects by pressing "F"
-  - Orbit objects by holding "ALT" and left-clicking
-  - 3D axis-gizmo label and orientation fixes
+  - Camera improvements: (by [@Q-Bert-Reynolds](https://www.github.com/Q-Bert-Reynolds), #40)
+    - Focus objects by pressing "F" 
+    - Orbit objects by holding "ALT" and left-clicking
+    - 3D axis-gizmo label and orientation fixes
 - Editor - Log Window:
   - Buttons for clear / copy to clipboard / save to file
-  - Properly strip ANSI codes 
+  - Properly strip ANSI codes
+- Editor - Scene:
+  - New scene setting for audio-mixer frequency (default: 32kHz)
+- Various toolchain and build-setup improvements (by [@thekovic](https://www.github.com/thekovic))
 
 # v0.2.0
 - Toolchain-Manager:

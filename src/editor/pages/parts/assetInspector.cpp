@@ -39,6 +39,8 @@ void Editor::AssetInspector::draw() {
   ImGui::Text("File: %s", asset->name.c_str());
   if (hasAssetConf && ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
   {
+    auto confBefore = asset->conf.serialize();
+
     ImTable::start("Settings");
 
     if (asset->type == FileType::IMAGE)
@@ -75,9 +77,13 @@ void Editor::AssetInspector::draw() {
           { 44100, "44100 Hz" },
         }, asset->conf.wavResampleRate.value
       );
-      ImTable::addComboBox("Compression", asset->conf.wavCompression.value, {
-        "None", "VADPCM", "Opus",
-      });
+
+      ImTable::addVecComboBox<ImTable::ComboEntry>("Compression", {
+          { 0, "None" },
+          { 1, "VADPCM" },
+          { 3, "Opus" },
+        }, asset->conf.wavCompression.value
+      );
     }
 
     if (asset->type != FileType::AUDIO)
@@ -93,6 +99,10 @@ void Editor::AssetInspector::draw() {
     ImTable::addCheckBox("Exclude", asset->conf.exclude);
 
     ImTable::end();
+
+    if (confBefore != asset->conf.serialize()) {
+      ctx.project->markDirty();
+    }
   }
 
   if (ImGui::CollapsingHeader("Preview", ImGuiTreeNodeFlags_DefaultOpen)) {
