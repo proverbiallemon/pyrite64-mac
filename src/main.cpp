@@ -159,7 +159,7 @@ int main(int argc, char** argv)
   SDL_GetTicks();
 
   // @TODO: handle actual DPI settings, or have scaling in-editor
-  float dpiScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+  float dpiScale = 1.0f;//SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
   SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
   SDL_Window* window = SDL_CreateWindow("Pyrite64 - Editor", (int)(1280 * dpiScale), (int)(800 * dpiScale), window_flags);
   ctx.window = window;
