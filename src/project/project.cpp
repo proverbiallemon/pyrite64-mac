@@ -11,9 +11,9 @@
 #include "../build/projectBuilder.h"
 #include "../utils/fs.h"
 #include "../utils/hash.h"
-
 #include "../utils/json.h"
 #include "../utils/jsonBuilder.h"
+#include "../context.h"
 
 namespace
 {
