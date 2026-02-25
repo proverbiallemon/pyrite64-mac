@@ -3,6 +3,7 @@
 * @license MIT
 */
 #include "toolchain.h"
+#include "fs.h"
 #include "logger.h"
 #include "proc.h"
 #include <filesystem>
@@ -42,6 +43,17 @@ void Utils::Toolchain::scan()
                        && fs::exists(state.toolchainPath / "bin" / "mkdfs.exe")
                        && fs::exists(state.toolchainPath / "include" / "n64.mk");
 
+    if(state.hasLibdragon) {
+      auto versionPath = state.toolchainPath / "libdragon-version.txt";
+      if(fs::exists(versionPath)) {
+        auto content = Utils::FS::loadTextFile(versionPath);
+        while(!content.empty() && (content.back() == '\n' || content.back() == '\r' || content.back() == ' ')) {
+          content.pop_back();
+        }
+        state.installedLibdragonCommit = content;
+      }
+    }
+
     state.hasTiny3d = fs::exists(state.toolchainPath / "bin" / "gltf_to_t3d.exe")
                     && fs::exists(state.toolchainPath / "include" / "t3d.mk")
                     && fs::exists(state.toolchainPath / "mips64-elf" / "include" / "t3d");
@@ -59,6 +71,18 @@ void Utils::Toolchain::scan()
     state.hasLibdragon = fs::exists(state.toolchainPath / "bin" / "n64tool")
                        && fs::exists(state.toolchainPath / "bin" / "mkdfs")
                        && fs::exists(state.toolchainPath / "include" / "n64.mk");
+
+    if(state.hasLibdragon) {
+      auto versionPath = state.toolchainPath / "libdragon-version.txt";
+      if(fs::exists(versionPath)) {
+        auto content = Utils::FS::loadTextFile(versionPath);
+        while(!content.empty() && (content.back() == '\n' || content.back() == '\r' || content.back() == ' ')) {
+          content.pop_back();
+        }
+        state.installedLibdragonCommit = content;
+      }
+    }
+
     state.hasTiny3d = fs::exists(state.toolchainPath / "bin" / "gltf_to_t3d")
                     && fs::exists(state.toolchainPath / "include" / "t3d.mk")
                     && fs::exists(state.toolchainPath / "mips64-elf" / "include" / "t3d");
@@ -67,7 +91,7 @@ void Utils::Toolchain::scan()
 
 namespace
 {
-  void runInstallScript(fs::path mingwPath, bool forceUpdate) {
+  void runInstallScript(fs::path mingwPath, bool forceUpdate, std::string libdragonPin) {
     // C:\msys64\usr\bin\mintty.exe --hold=error /bin/env MSYSTEM=MINGW64 /bin/bash -l %self_path%mingw_create_env.sh
     auto minttyPath = mingwPath / "usr" / "bin" / "mintty.exe";
     if (!fs::exists(minttyPath)) {
@@ -78,6 +102,7 @@ namespace
 
     std::string envVars = "MSYSTEM=MINGW64 ";
     if (forceUpdate) envVars += "FORCE_UPDATE=true ";
+    if (!libdragonPin.empty()) envVars += "LIBDRAGON_PIN=" + libdragonPin + " ";
     std::string command = minttyPath.string() + " --hold=error /bin/env " + envVars + "/bin/bash -l ";
     
     fs::path scriptPath = Utils::Proc::getDataRoot() / "data" / "scripts" / "mingw_create_env.sh";
@@ -89,7 +114,7 @@ namespace
   }
 }
 
-void Utils::Toolchain::install()
+void Utils::Toolchain::install(const std::string &libdragonPin)
 {
   if (installing.load()) {
     printf("Toolchain installation already in progress.\n");
@@ -98,7 +123,7 @@ void Utils::Toolchain::install()
 
   installing.store(true);
   bool isInstalled = state.hasToolchain && state.hasLibdragon && state.hasTiny3d;
-  std::thread installThread(runInstallScript, state.mingwPath, isInstalled);
+  std::thread installThread(runInstallScript, state.mingwPath, isInstalled, libdragonPin);
   installThread.detach();
 }
 
