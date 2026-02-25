@@ -6,6 +6,9 @@
 #include "../../actions.h"
 #include "../../imgui/helper.h"
 #include "../../../context.h"
+#include "../../../utils/libdragonVersions.h"
+#include "../../../utils/fs.h"
+#include "../../../utils/proc.h"
 #include <iostream>
 #include <cstdlib>
 
@@ -24,6 +27,11 @@ namespace
   std::string projectName{};
   std::string projectSafeName{};
   std::string projectPath{};
+
+  Utils::LibdragonVersions versionFetcher{};
+  bool fetchTriggered{false};
+  int selectedCommitIdx{-1};
+  std::string recommendedHash{};
 
   // draws a rounded square with text inside
   void drawStep(ImVec2 &pps, const char* text, bool done, bool nextArrow = true)
@@ -82,7 +90,7 @@ bool Editor::ToolchainOverlay::draw()
 
   ImGuiIO &io = ImGui::GetIO();
   ImGui::SetNextWindowPos({io.DisplaySize.x / 2, io.DisplaySize.y / 2}, ImGuiCond_Always, {0.5f, 0.5f});
-  ImGui::SetNextWindowSize({800, 400}, ImGuiCond_Always);
+  ImGui::SetNextWindowSize({800, 550}, ImGuiCond_Always);
 
   if (ImGui::BeginPopupModal("Toolchain", nullptr,
     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
@@ -97,7 +105,22 @@ bool Editor::ToolchainOverlay::draw()
     }
 
     auto &toolState = ctx.toolchain.getState();
-  
+
+    // Load recommended hash (once per open)
+    if(recommendedHash.empty()) {
+      auto path = Utils::Proc::getDataRoot() / "data" / "libdragon-recommended.txt";
+      recommendedHash = Utils::FS::loadTextFile(path);
+      while(!recommendedHash.empty() && (recommendedHash.back() == '\n' || recommendedHash.back() == '\r' || recommendedHash.back() == ' ')) {
+        recommendedHash.pop_back();
+      }
+    }
+
+    // Trigger commit fetch once when overlay opens
+    if(!fetchTriggered) {
+      versionFetcher.fetchCommits();
+      fetchTriggered = true;
+    }
+
     ImGui::Dummy({0, 2});
     ImGui::PushFont(nullptr, 24);
       const char* title = "Toolchain Manager";
@@ -137,18 +160,102 @@ bool Editor::ToolchainOverlay::draw()
     float posX = 106;
     ImGui::SetCursorPos({posX, startPos.y + BUTTON_SIZE.y + 15});
 
-    if(!ctx.toolchain.isInstalling()) 
+    if(!ctx.toolchain.isInstalling())
     {
-      if(isWindows)
+      if(allDone)
       {
-        if(allDone) {
-          ImGui::Text(
-            "Toolchain found in: %s\n"
-            "The N64 toolchain is correctly installed.\n"
-            "If you wish to update it, press the update button below.",
-            ctx.toolchain.getState().toolchainPath.string().c_str()
-          );
-        } else if(STEP_DONE[0]) {
+        // === Version Info Section ===
+        auto installed = toolState.installedLibdragonCommit;
+        bool hasVersion = !installed.empty();
+        bool isUpToDate = hasVersion && !recommendedHash.empty()
+                       && installed.substr(0, 7) == recommendedHash.substr(0, 7);
+
+        auto commitList = versionFetcher.getCommits();
+        std::string installedDisplay = hasVersion ? installed.substr(0, 7) : "Unknown";
+        std::string recommendedDisplay = recommendedHash.empty() ? "" : recommendedHash.substr(0, 7);
+
+        for(auto &c : commitList) {
+          if(hasVersion && c.sha.substr(0, 7) == installed.substr(0, 7)) {
+            installedDisplay = installed.substr(0, 7) + " (" + c.date + ") " + c.message;
+          }
+          if(!recommendedHash.empty() && c.sha.substr(0, 7) == recommendedHash.substr(0, 7)) {
+            recommendedDisplay = recommendedHash.substr(0, 7) + " (" + c.date + ") " + c.message;
+          }
+        }
+
+        ImGui::SetCursorPosX(posX);
+        ImGui::Text("Installed: %s", installedDisplay.c_str());
+
+        ImGui::SetCursorPosX(posX);
+        if(isUpToDate) {
+          ImGui::TextColored({0.2f, 1.0f, 0.2f, 1.0f}, "Recommended: Up to date");
+        } else if(!recommendedHash.empty()) {
+          ImGui::Text("Recommended: %s", recommendedDisplay.c_str());
+        }
+
+        // "Update to Recommended" button
+        if(!isUpToDate && !recommendedHash.empty()) {
+          ImGui::Dummy({0, 8});
+          ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 200) * 0.5f);
+          if(ImGui::Button("Update to Recommended", {200, 35})) {
+            ctx.toolchain.install(recommendedHash);
+          }
+        }
+
+        // === Advanced Section ===
+        ImGui::Dummy({0, 8});
+        ImGui::SetCursorPosX(posX);
+
+        if(ImGui::TreeNode("Advanced"))
+        {
+          auto fetchState = versionFetcher.getState();
+
+          if(fetchState == Utils::FetchState::FETCHING) {
+            ImGui::Text("Fetching versions...");
+          } else if(fetchState == Utils::FetchState::ERROR) {
+            ImGui::TextColored({1.0f, 0.4f, 0.4f, 1.0f}, "%s", versionFetcher.getError().c_str());
+            if(ImGui::SmallButton("Retry")) {
+              versionFetcher.fetchCommits();
+            }
+          } else if(fetchState == Utils::FetchState::DONE) {
+            ImGui::BeginChild("CommitList", {0, 150}, ImGuiChildFlags_Borders);
+            for(int i = 0; i < (int)commitList.size(); i++) {
+              auto &c = commitList[i];
+              char label[256];
+              bool isInstalled = hasVersion && c.sha.substr(0, 7) == installed.substr(0, 7);
+
+              snprintf(label, sizeof(label), "%s (%s) %s%s",
+                c.sha.substr(0, 7).c_str(), c.date.c_str(), c.message.c_str(),
+                isInstalled ? "  " ICON_MDI_CHECK : "");
+
+              if(ImGui::Selectable(label, selectedCommitIdx == i)) {
+                selectedCommitIdx = i;
+              }
+            }
+            ImGui::EndChild();
+
+            if(selectedCommitIdx >= 0 && selectedCommitIdx < (int)commitList.size()) {
+              auto &sel = commitList[selectedCommitIdx];
+              bool isAlreadyInstalled = hasVersion && sel.sha.substr(0, 7) == installed.substr(0, 7);
+              if(!isAlreadyInstalled) {
+                ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 150) * 0.5f);
+                if(ImGui::Button("Install Selected", {150, 30})) {
+                  ctx.toolchain.install(sel.sha);
+                }
+              }
+            }
+
+            if(ImGui::SmallButton("Refresh")) {
+              versionFetcher.fetchCommits();
+            }
+          }
+
+          ImGui::TreePop();
+        }
+      }
+      else if(isWindows)
+      {
+        if(STEP_DONE[0]) {
           ImGui::Text(
             "The N64 toolchain is missing or not properly installed.\n"
             "Click the button below to install and update the required components.\n"
@@ -161,50 +268,39 @@ bool Editor::ToolchainOverlay::draw()
           ImGui::SetCursorPosX(posX);
           ImGui::Text("During the installation, keep the default path as is at \"C:\\msys64\".");
         }
-      } else
+      }
+      else
       {
-        if(allDone) {
-          ImGui::Text(
-            "Toolchain found in: %s\n"
-            "The N64 toolchain is correctly installed.\n",
-            ctx.toolchain.getState().toolchainPath.string().c_str()
-          );
-        } else
-        {
-          ImGui::Text(
-            "The N64 toolchain is missing or not properly installed.\n"
-            "Automatic installation is currently only available on Windows.\n"
-            "Please follow the guide for libdragon and tiny3d here:\n"
-          );
-
-          ImGui::Dummy({0, 4});
-          ImGui::SetCursorPosX(posX);
-
-          ImGui::TextLinkOpenURL("Libdragon Wiki", "https://github.com/DragonMinded/libdragon/wiki/Installing-libdragon");
-          ImGui::SameLine(); ImGui::Text(" + "); ImGui::SameLine();
-          ImGui::TextLinkOpenURL("Tiny3D Docs", "https://github.com/HailToDodongo/tiny3d?tab=readme-ov-file#build");
-
-          ImGui::Dummy({0, 4});
-          ImGui::SetCursorPosX(posX);
-
-          ImGui::Text(
-            "Make sure to use the 'preview' branch of libdragon,\n"
-            "and set the N64_INST environment variable accordingly."
-          );
-        }
-      }
-      
-      ImGui::SetCursorPos({
-        (ImGui::GetWindowWidth() - 150) * 0.5f,
-        ImGui::GetCursorPosY() + 20
-      });
-
-      if(STEP_DONE[0] && isWindows) {
-        if (ImGui::Button(allDone ? "Update" : "Install", {150, 40})) {
-          ctx.toolchain.install();
-        }
+        ImGui::Text(
+          "The N64 toolchain is missing or not properly installed.\n"
+          "Automatic installation is currently only available on Windows.\n"
+          "Please follow the guide for libdragon and tiny3d here:\n"
+        );
+        ImGui::Dummy({0, 4});
+        ImGui::SetCursorPosX(posX);
+        ImGui::TextLinkOpenURL("Libdragon Wiki", "https://github.com/DragonMinded/libdragon/wiki/Installing-libdragon");
+        ImGui::SameLine(); ImGui::Text(" + "); ImGui::SameLine();
+        ImGui::TextLinkOpenURL("Tiny3D Docs", "https://github.com/HailToDodongo/tiny3d?tab=readme-ov-file#build");
+        ImGui::Dummy({0, 4});
+        ImGui::SetCursorPosX(posX);
+        ImGui::Text(
+          "Make sure to use the 'preview' branch of libdragon,\n"
+          "and set the N64_INST environment variable accordingly."
+        );
       }
 
+      // Install/Update button (for not-fully-installed state on Windows)
+      if(!allDone) {
+        ImGui::SetCursorPos({
+          (ImGui::GetWindowWidth() - 150) * 0.5f,
+          ImGui::GetCursorPosY() + 20
+        });
+        if(STEP_DONE[0] && isWindows) {
+          if (ImGui::Button("Install", {150, 40})) {
+            ctx.toolchain.install();
+          }
+        }
+      }
     } else {
       ImGui::Text(
         "Installing and updating the toolchain.\n"
@@ -219,6 +315,9 @@ bool Editor::ToolchainOverlay::draw()
       ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 40);
 
       if (ImGui::Button("Back", {100, 0})) {
+        fetchTriggered = false;
+        selectedCommitIdx = -1;
+        recommendedHash.clear();
         ImGui::CloseCurrentPopup();
       }
     }
