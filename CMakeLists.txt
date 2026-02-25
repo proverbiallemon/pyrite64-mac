@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(pyrite64 VERSION 0.3.3)
+project(pyrite64 VERSION 0.4.0)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -121,6 +121,8 @@ add_executable(pyrite64 src/main.cpp
         src/editor/undoRedo.cpp
         src/editor/selectionUtils.h
         src/editor/selectionUtils.cpp
+        src/editor/keymap.h
+        src/editor/keymap.cpp
         src/utils/json.h
         src/utils/colors.h
         src/editor/imgui/theme.h
@@ -165,6 +167,8 @@ add_executable(pyrite64 src/main.cpp
         src/editor/pages/parts/memoryDashboard.cpp
         src/editor/pages/parts/projectSettings.h
         src/editor/pages/parts/projectSettings.cpp
+        src/editor/pages/parts/preferences.h
+        src/editor/pages/parts/preferences.cpp
         src/editor/pages/parts/sceneGraph.h
         src/editor/pages/parts/sceneGraph.cpp
         src/project/scene/object.h

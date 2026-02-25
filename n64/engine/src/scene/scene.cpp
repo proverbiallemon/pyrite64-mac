@@ -169,7 +169,6 @@ void P64::Scene::update(float deltaTime)
   }
 
   ticksActorUpdate = get_ticks() - ticksActorUpdate;
-
   collScene.update(deltaTime);
 
   for(auto &obj : pendingObjDelete)
@@ -215,7 +214,6 @@ void P64::Scene::draw([[maybe_unused]] float deltaTime)
   GlobalScript::callHooks(GlobalScript::HookType::SCENE_PRE_DRAW);
   renderPipeline->preDraw();
   DrawLayer::draw(0);
-
 
   // 3D Pass, for every active camera
   for(auto &cam : cameras)

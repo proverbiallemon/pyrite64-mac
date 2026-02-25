@@ -1,3 +1,13 @@
+# v0.4.0
+- Editor - General
+  - Fix clean-build under windows
+  - Automatically force a clean if engine code changed
+  - Configurable keybindings and editor preferences (by [@Q-Bert-Reynolds](https://www.github.com/Q-Bert-Reynolds), #95)
+- Toolchain manager:
+  - Existing installations can now be updated too (by [@thekovic](https://www.github.com/thekovic), #11)
+- CLI
+  - New command to clean a project (`--cmd clean`)
+
 # v0.3.0
 - Editor - General
   - Auto-Save before build & run
@@ -20,6 +30,8 @@
   - Properly strip ANSI codes
 - Editor - Scene:
   - New scene setting for audio-mixer frequency (default: 32kHz)
+- Model Converter (tiny3d):
+  - fix issue where multiple animations with partially matching names could lead to them being ignored
 - Various toolchain and build-setup improvements (by [@thekovic](https://www.github.com/thekovic))
 
 # v0.2.0
