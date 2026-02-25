@@ -170,7 +170,8 @@ bool Editor::ToolchainOverlay::draw()
         bool isUpToDate = hasVersion && !recommendedHash.empty()
                        && installed.substr(0, 7) == recommendedHash.substr(0, 7);
 
-        auto commitList = versionFetcher.getCommits();
+        auto fetchState = versionFetcher.getState();
+        auto commitList = (fetchState == Utils::FetchState::DONE) ? versionFetcher.getCommits() : std::vector<Utils::LibdragonCommit>{};
         std::string installedDisplay = hasVersion ? installed.substr(0, 7) : "Unknown";
         std::string recommendedDisplay = recommendedHash.empty() ? "" : recommendedHash.substr(0, 7);
 
@@ -208,8 +209,6 @@ bool Editor::ToolchainOverlay::draw()
 
         if(ImGui::TreeNode("Advanced"))
         {
-          auto fetchState = versionFetcher.getState();
-
           if(fetchState == Utils::FetchState::FETCHING) {
             ImGui::Text("Fetching versions...");
           } else if(fetchState == Utils::FetchState::ERROR) {

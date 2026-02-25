@@ -86,7 +86,7 @@ if [[ ! -f "$sdkpath/bin/n64tool.exe" || "${FORCE_UPDATE:-}" == "true" || -n "${
     echo "Building libdragon..."
     make -j6 libdragon && make -j6 tools
     make install || sudo -E make install
-    make -C tools install || sudo -C tools install
+    make -C tools install || sudo -E make -C tools install
     # Build an example as sanity check
     make -C examples/brew-volley clean
     make -C examples/brew-volley

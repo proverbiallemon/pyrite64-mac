@@ -102,7 +102,19 @@ namespace
 
     std::string envVars = "MSYSTEM=MINGW64 ";
     if (forceUpdate) envVars += "FORCE_UPDATE=true ";
-    if (!libdragonPin.empty()) envVars += "LIBDRAGON_PIN=" + libdragonPin + " ";
+    if (!libdragonPin.empty()) {
+      // Validate that the pin looks like a git hash (hex chars only)
+      bool validHash = !libdragonPin.empty() && libdragonPin.size() <= 40;
+      for (char c : libdragonPin) {
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+          validHash = false;
+          break;
+        }
+      }
+      if (validHash) {
+        envVars += "LIBDRAGON_PIN=" + libdragonPin + " ";
+      }
+    }
     std::string command = minttyPath.string() + " --hold=error /bin/env " + envVars + "/bin/bash -l ";
     
     fs::path scriptPath = Utils::Proc::getDataRoot() / "data" / "scripts" / "mingw_create_env.sh";
