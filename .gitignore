@@ -13,3 +13,4 @@ pyrite64.exe
 Pyrite64.app/
 .DS_Store
 preferences.json
+*.zip
