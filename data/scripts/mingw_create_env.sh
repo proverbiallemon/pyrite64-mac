@@ -72,10 +72,17 @@ cd libdragon
 
 git checkout preview
 git pull
+
+# Pin to specific commit if requested
+if [ -n "${LIBDRAGON_PIN:-}" ]; then
+    echo "Pinning libdragon to: $LIBDRAGON_PIN"
+    git checkout "$LIBDRAGON_PIN"
+fi
+
 make clean && make -C tools clean
 
 # Build libdragon
-if [[ ! -f "$sdkpath/bin/n64tool.exe" || "${FORCE_UPDATE:-}" == "true" ]]; then
+if [[ ! -f "$sdkpath/bin/n64tool.exe" || "${FORCE_UPDATE:-}" == "true" || -n "${LIBDRAGON_PIN:-}" ]]; then
     echo "Building libdragon..."
     make -j6 libdragon && make -j6 tools
     make install || sudo -E make install
@@ -84,8 +91,12 @@ if [[ ! -f "$sdkpath/bin/n64tool.exe" || "${FORCE_UPDATE:-}" == "true" ]]; then
     make -C examples/brew-volley clean
     make -C examples/brew-volley
 else
-    echo "Libdragon already installed"    
+    echo "Libdragon already installed"
 fi
+
+# Record installed version
+git rev-parse HEAD > "$N64_INST/libdragon-version.txt"
+echo "Recorded libdragon version: $(cat "$N64_INST/libdragon-version.txt")"
 
 cd ..
 
