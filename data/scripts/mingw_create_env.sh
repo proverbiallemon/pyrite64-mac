@@ -1,4 +1,10 @@
 # Run in: C:\msys64\mingw64.exe
+#
+# Environment variables:
+#   N64_INST         - SDK install path (default: /pyrite64-sdk)
+#   FORCE_UPDATE     - if "true", rebuild even if already installed
+#   LIBDRAGON_PIN    - git commit hash to checkout for libdragon
+#   LIBDRAGON_ONLY   - if "true", skip toolchain/tiny3d, only rebuild libdragon
 
 # Enable bash 'strict mode'
 set -euo pipefail
@@ -13,55 +19,67 @@ cd "$workpath"
 
 export N64_INST="${N64_INST:-$sdkpath}"
 
-echo "Updating MSYS2 environment..."
-
-if pacman -Qu | grep -Eq '^(msys2-runtime|bash|pacman)\s'; then
-    msysUpdate=true
-else
-    msysUpdate=false
+if [ -n "${LIBDRAGON_PIN:-}" ]; then
+    echo "Libdragon pin: $LIBDRAGON_PIN"
+fi
+if [ "${LIBDRAGON_ONLY:-}" == "true" ]; then
+    echo "Mode: libdragon only"
 fi
 
-pacman -Syyu --noconfirm
+# === Toolchain + MSYS2 setup (skip if LIBDRAGON_ONLY) ===
+if [ "${LIBDRAGON_ONLY:-}" != "true" ]; then
 
-if $msysUpdate; then
-    echo "Core MSYS2 components were updated. Please close this window and start the installation again."
-    exit 1
-fi
+    echo "Updating MSYS2 environment..."
 
-pacman -S unzip base-devel mingw-w64-x86_64-gcc mingw-w64-x86_64-make git --noconfirm --needed
+    if pacman -Qu | grep -Eq '^(msys2-runtime|bash|pacman)\s'; then
+        msysUpdate=true
+    else
+        msysUpdate=false
+    fi
 
-echo "Building Libdragon environment..."
+    pacman -Syyu --noconfirm
 
-# download libdragon toolchain
-if [ -e $zipfile ]; then
-    echo "Toolchain already downloaded"
-else
-    wget "https://github.com/DragonMinded/libdragon/releases/download/toolchain-continuous-prerelease/gcc-toolchain-mips64-win64.zip" -O $zipfile
-fi
+    if $msysUpdate; then
+        echo "Core MSYS2 components were updated. Please close this window and start the installation again."
+        exit 1
+    fi
 
-if [ -e $sdkpath ]; then
-    echo "Toolchain already extracted"
-else
-    echo "Extracting toolchain..."
-    # rm -rf $sdkpath
-    unzip -q $zipfile -d $sdkpath
-fi
+    pacman -S unzip base-devel mingw-w64-x86_64-gcc mingw-w64-x86_64-make git --noconfirm --needed
 
-# Sanity check: Verify that gcc exists
-if [ ! -x "$sdkpath/bin/mips64-elf-gcc.exe" ]; then
-    echo "ERROR: Toolchain installation appears incomplete."
-    echo "Expected file not found: $sdkpath/bin/mips64-elf-gcc.exe"
-    echo "Toolchain ZIP file may be corrupted or only partially downloaded."
+    echo "Building Libdragon environment..."
 
-    rm -rf "$zipfile" "$sdkpath"
+    # download libdragon toolchain
+    if [ -e $zipfile ]; then
+        echo "Toolchain already downloaded"
+    else
+        wget "https://github.com/DragonMinded/libdragon/releases/download/toolchain-continuous-prerelease/gcc-toolchain-mips64-win64.zip" -O $zipfile
+    fi
 
-    echo "Please re-run the setup to download and extract the toolchain again."
-    exit 1
-fi
+    if [ -e $sdkpath ]; then
+        echo "Toolchain already extracted"
+    else
+        echo "Extracting toolchain..."
+        # rm -rf $sdkpath
+        unzip -q $zipfile -d $sdkpath
+    fi
 
-echo "Toolchain installation looks OK"
+    # Sanity check: Verify that gcc exists
+    if [ ! -x "$sdkpath/bin/mips64-elf-gcc.exe" ]; then
+        echo "ERROR: Toolchain installation appears incomplete."
+        echo "Expected file not found: $sdkpath/bin/mips64-elf-gcc.exe"
+        echo "Toolchain ZIP file may be corrupted or only partially downloaded."
 
-# download libdragon itself
+        rm -rf "$zipfile" "$sdkpath"
+
+        echo "Please re-run the setup to download and extract the toolchain again."
+        exit 1
+    fi
+
+    echo "Toolchain installation looks OK"
+
+fi # end LIBDRAGON_ONLY skip
+
+# === Build libdragon ===
 if [ -e "libdragon" ]; then
     echo "Libdragon already downloaded"
 else
@@ -79,11 +97,10 @@ if [ -n "${LIBDRAGON_PIN:-}" ]; then
     git checkout "$LIBDRAGON_PIN"
 fi
 
-make clean && make -C tools clean
-
 # Build libdragon
 if [[ ! -f "$sdkpath/bin/n64tool.exe" || "${FORCE_UPDATE:-}" == "true" || -n "${LIBDRAGON_PIN:-}" ]]; then
     echo "Building libdragon..."
+    make clean && make -C tools clean
     make -j6 libdragon && make -j6 tools
     make install || sudo -E make install
     make -C tools install || sudo -E make -C tools install
@@ -100,33 +117,38 @@ echo "Recorded libdragon version: $(cat "$N64_INST/libdragon-version.txt")"
 
 cd ..
 
-# download tiny3d
-if [ -e "tiny3d" ]; then
-    echo "Tiny3D already downloaded"
-else
-    git clone https://github.com/HailToDodongo/tiny3d.git
-fi
+# === Tiny3D (skip if LIBDRAGON_ONLY) ===
+if [ "${LIBDRAGON_ONLY:-}" != "true" ]; then
 
-cd tiny3d
+    # download tiny3d
+    if [ -e "tiny3d" ]; then
+        echo "Tiny3D already downloaded"
+    else
+        git clone https://github.com/HailToDodongo/tiny3d.git
+    fi
 
-git pull
-make clean
+    cd tiny3d
 
-# Build Tiny3D
-if [[ ! -f "$sdkpath/bin/gltf_to_t3d.exe" || "${FORCE_UPDATE:-}" == "true" ]]; then
-    echo "Building Tiny3D..."
-    make -j6
-    make install || sudo -E make install
-else
-    echo "Tiny3D already installed"    
-fi
+    git pull
+    make clean
 
-# Tools
-echo "Building tools..."
-make -C tools/gltf_importer -j6
-make -C tools/gltf_importer install || sudo -E make -C tools/gltf_importer install
+    # Build Tiny3D
+    if [[ ! -f "$sdkpath/bin/gltf_to_t3d.exe" || "${FORCE_UPDATE:-}" == "true" ]]; then
+        echo "Building Tiny3D..."
+        make -j6
+        make install || sudo -E make install
+    else
+        echo "Tiny3D already installed"
+    fi
 
-cd ..
+    # Tools
+    echo "Building tools..."
+    make -C tools/gltf_importer -j6
+    make -C tools/gltf_importer install || sudo -E make -C tools/gltf_importer install
+
+    cd ..
+
+fi # end LIBDRAGON_ONLY skip
 
 echo "Installation complete!"
 sleep 2

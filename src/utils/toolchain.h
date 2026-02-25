@@ -28,7 +28,7 @@ namespace Utils
     public:
       void scan();
 
-      void install(const std::string &libdragonPin = "");
+      void install(const std::string &libdragonPin = "", bool libdragonOnly = false);
       bool isInstalling();
 
       bool runCmdSyncLogged(const std::string &cmd);

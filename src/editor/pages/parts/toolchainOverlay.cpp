@@ -152,8 +152,8 @@ bool Editor::ToolchainOverlay::draw()
     };
     
     bool allDone = true;
-    for (int i = 0; i < 4; i++) {
-      drawStep(startPos, STEPS[i], STEP_DONE[i], i < 3);
+    for (int i = 0; i < steps; i++) {
+      drawStep(startPos, STEPS[i], STEP_DONE[i], i < (steps - 1));
       allDone = allDone && STEP_DONE[i];
     }
 
@@ -184,8 +184,14 @@ bool Editor::ToolchainOverlay::draw()
           }
         }
 
+        ImGui::Text(
+          "Toolchain found in: %s",
+          ctx.toolchain.getState().toolchainPath.string().c_str()
+        );
+
+        ImGui::Dummy({0, 4});
         ImGui::SetCursorPosX(posX);
-        ImGui::Text("Installed: %s", installedDisplay.c_str());
+        ImGui::Text("Libdragon: %s", installedDisplay.c_str());
 
         ImGui::SetCursorPosX(posX);
         if(isUpToDate) {
@@ -194,12 +200,12 @@ bool Editor::ToolchainOverlay::draw()
           ImGui::Text("Recommended: %s", recommendedDisplay.c_str());
         }
 
-        // "Update to Recommended" button
+        // "Update to Recommended" button (libdragon only, skip toolchain/tiny3d rebuild)
         if(!isUpToDate && !recommendedHash.empty()) {
           ImGui::Dummy({0, 8});
           ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 200) * 0.5f);
           if(ImGui::Button("Update to Recommended", {200, 35})) {
-            ctx.toolchain.install(recommendedHash);
+            ctx.toolchain.install(recommendedHash, true);
           }
         }
 
@@ -239,7 +245,7 @@ bool Editor::ToolchainOverlay::draw()
               if(!isAlreadyInstalled) {
                 ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 150) * 0.5f);
                 if(ImGui::Button("Install Selected", {150, 30})) {
-                  ctx.toolchain.install(sel.sha);
+                  ctx.toolchain.install(sel.sha, true);
                 }
               }
             }
