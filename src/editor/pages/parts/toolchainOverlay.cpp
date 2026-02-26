@@ -150,7 +150,7 @@ bool Editor::ToolchainOverlay::draw()
       (ImGui::GetWindowWidth() - contentWidth) * 0.5f,
       ImGui::GetCursorPosY() + 40
     };
-    
+
     bool allDone = true;
     for (int i = 0; i < steps; i++) {
       drawStep(startPos, STEPS[i], STEP_DONE[i], i < (steps - 1));
@@ -167,8 +167,6 @@ bool Editor::ToolchainOverlay::draw()
         // === Version Info Section ===
         auto installed = toolState.installedLibdragonCommit;
         bool hasVersion = !installed.empty();
-        bool isUpToDate = hasVersion && !recommendedHash.empty()
-                       && installed.substr(0, 7) == recommendedHash.substr(0, 7);
 
         auto fetchState = versionFetcher.getState();
         auto commitList = (fetchState == Utils::FetchState::DONE) ? versionFetcher.getCommits() : std::vector<Utils::LibdragonCommit>{};
@@ -193,19 +191,39 @@ bool Editor::ToolchainOverlay::draw()
         ImGui::SetCursorPosX(posX);
         ImGui::Text("Libdragon: %s", installedDisplay.c_str());
 
-        ImGui::SetCursorPosX(posX);
-        if(isUpToDate) {
-          ImGui::TextColored({0.2f, 1.0f, 0.2f, 1.0f}, "Recommended: Up to date");
-        } else if(!recommendedHash.empty()) {
-          ImGui::Text("Recommended: %s", recommendedDisplay.c_str());
+        // Emergency rollback: only shown when the recommended hash
+        // differs from the latest commit (maintainer pulled the brake)
+        bool recommendedIsEmergency = false;
+        if(!recommendedHash.empty() && !commitList.empty()) {
+          recommendedIsEmergency = recommendedHash.substr(0, 7) != commitList[0].sha.substr(0, 7);
         }
 
-        // "Update to Recommended" button (libdragon only, skip toolchain/tiny3d rebuild)
-        if(!isUpToDate && !recommendedHash.empty()) {
+        bool isOnRecommended = hasVersion && !recommendedHash.empty()
+                             && installed.substr(0, 7) == recommendedHash.substr(0, 7);
+
+        if(!isOnRecommended && recommendedIsEmergency) {
           ImGui::Dummy({0, 8});
+          ImGui::SetCursorPosX(posX);
+          ImGui::TextColored({1.0f, 0.8f, 0.2f, 1.0f},
+            ICON_MDI_ALERT " A specific version is recommended:");
+          ImGui::SetCursorPosX(posX);
+          ImGui::Text("  %s", recommendedDisplay.c_str());
+          ImGui::Dummy({0, 4});
           ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 200) * 0.5f);
           if(ImGui::Button("Update to Recommended", {200, 35})) {
-            ctx.toolchain.install(recommendedHash, true);
+            ctx.toolchain.install(recommendedHash);
+          }
+        }
+
+        // "Update to Latest" button
+        if(!commitList.empty()) {
+          bool isLatest = hasVersion && commitList[0].sha.substr(0, 7) == installed.substr(0, 7);
+          if(!isLatest) {
+            ImGui::Dummy({0, 8});
+            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 180) * 0.5f);
+            if(ImGui::Button("Update to Latest", {180, 35})) {
+              ctx.toolchain.install(commitList[0].sha);
+            }
           }
         }
 
@@ -245,7 +263,7 @@ bool Editor::ToolchainOverlay::draw()
               if(!isAlreadyInstalled) {
                 ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 150) * 0.5f);
                 if(ImGui::Button("Install Selected", {150, 30})) {
-                  ctx.toolchain.install(sel.sha, true);
+                  ctx.toolchain.install(sel.sha);
                 }
               }
             }
@@ -312,9 +330,9 @@ bool Editor::ToolchainOverlay::draw()
         "This process may take a few minutes, please wait..."
       );
     }
-  
+
     // back button
-    if(!ctx.toolchain.isInstalling()) 
+    if(!ctx.toolchain.isInstalling())
     {
       ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 110 - 20);
       ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 40);

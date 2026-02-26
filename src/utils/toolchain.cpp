@@ -136,7 +136,7 @@ void Utils::Toolchain::scan()
 
 namespace
 {
-  void runInstallScript(fs::path mingwPath, bool forceUpdate, std::string libdragonPin, bool libdragonOnly) {
+  void runInstallScript(fs::path mingwPath, bool forceUpdate, std::string libdragonPin) {
     // C:\msys64\usr\bin\mintty.exe --hold=error /bin/env MSYSTEM=MINGW64 /bin/bash -l %self_path%mingw_create_env.sh
     auto minttyPath = mingwPath / "usr" / "bin" / "mintty.exe";
     if (!fs::exists(minttyPath)) {
@@ -150,7 +150,6 @@ namespace
     if (!libdragonPin.empty() && isValidGitHash(libdragonPin)) {
       envVars += "LIBDRAGON_PIN=" + libdragonPin + " ";
     }
-    if (libdragonOnly) envVars += "LIBDRAGON_ONLY=true ";
     std::string command = minttyPath.string() + " --hold=error /bin/env " + envVars + "/bin/bash -l ";
 
     fs::path scriptPath = Utils::Proc::getDataRoot() / "data" / "scripts" / "mingw_create_env.sh";
@@ -162,7 +161,7 @@ namespace
   }
 }
 
-void Utils::Toolchain::install(const std::string &libdragonPin, bool libdragonOnly)
+void Utils::Toolchain::install(const std::string &libdragonPin)
 {
   if (installing.load()) {
     printf("Toolchain installation already in progress.\n");
@@ -171,7 +170,7 @@ void Utils::Toolchain::install(const std::string &libdragonPin, bool libdragonOn
 
   installing.store(true);
   bool isInstalled = state.hasToolchain && state.hasLibdragon && state.hasTiny3d;
-  std::thread installThread(runInstallScript, state.mingwPath, isInstalled, libdragonPin, libdragonOnly);
+  std::thread installThread(runInstallScript, state.mingwPath, isInstalled, libdragonPin);
   installThread.detach();
 }
 
