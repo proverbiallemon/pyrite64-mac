@@ -1,0 +1,13 @@
+diff --git a/include/surface.h b/include/surface.h
+index c0ec08fca..78925ec55 100644
+--- a/include/surface.h
++++ b/include/surface.h
+@@ -169,7 +169,7 @@ typedef struct surface_s
+  */
+ inline surface_t surface_make(void *buffer, tex_format_t format, uint16_t width, uint16_t height, uint16_t stride) {
+     return (surface_t){
+-        .flags = format,
++        .flags = (uint16_t)format,
+         .width = width,
+         .height = height,
+         .stride = stride,

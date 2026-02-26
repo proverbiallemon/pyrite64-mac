@@ -13,6 +13,40 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
         "Run: cmake --preset <name>")
 endif()
 
+# Apply macOS compatibility patches to vendored submodules.
+# These fix issues with Apple Clang (std::ranges, narrowing conversions)
+# that don't affect GCC/MSVC. Patches are idempotent (git apply --check).
+if(APPLE)
+    find_program(GIT_EXECUTABLE git)
+    if(GIT_EXECUTABLE)
+        foreach(PATCH_ENTRY
+            "vendored/ImNodeFlow;data/patches/imflownode-macos-std-ranges.patch"
+            "vendored/libdragon;data/patches/libdragon-surface-uint16-cast.patch"
+        )
+            string(REPLACE ";" ";" PATCH_LIST "${PATCH_ENTRY}")
+            list(GET PATCH_LIST 0 PATCH_DIR)
+            list(GET PATCH_LIST 1 PATCH_FILE)
+            set(FULL_PATCH "${CMAKE_SOURCE_DIR}/${PATCH_FILE}")
+            set(FULL_DIR "${CMAKE_SOURCE_DIR}/${PATCH_DIR}")
+            if(EXISTS "${FULL_PATCH}")
+                execute_process(
+                    COMMAND ${GIT_EXECUTABLE} apply --check "${FULL_PATCH}"
+                    WORKING_DIRECTORY "${FULL_DIR}"
+                    RESULT_VARIABLE PATCH_CHECK_RESULT
+                    OUTPUT_QUIET ERROR_QUIET
+                )
+                if(PATCH_CHECK_RESULT EQUAL 0)
+                    execute_process(
+                        COMMAND ${GIT_EXECUTABLE} apply "${FULL_PATCH}"
+                        WORKING_DIRECTORY "${FULL_DIR}"
+                    )
+                    message(STATUS "Applied patch: ${PATCH_FILE}")
+                endif()
+            endif()
+        endforeach()
+    endif()
+endif()
+
 # set(SDL_SHARED ON)
 # set(SDL_STATIC ON)
 
@@ -245,6 +279,7 @@ add_executable(pyrite64 src/main.cpp
         src/editor/globalActions.cpp
         src/editor/pages/parts/toolchainOverlay.cpp
         src/utils/toolchain.cpp
+        src/utils/libdragonVersions.cpp
         src/editor/imgui/notification.cpp
         src/utils/ringBuffer.h
         src/utils/time.cpp
