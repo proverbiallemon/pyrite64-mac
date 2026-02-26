@@ -6,6 +6,8 @@ echo "Building Pyrite64..."
 cmake --build --preset macos
 
 echo "Updating .app bundle..."
+mkdir -p Pyrite64.app/Contents/MacOS
+mkdir -p Pyrite64.app/Contents/Resources
 cp pyrite64 Pyrite64.app/Contents/MacOS/pyrite64
 rsync -a --delete data/ Pyrite64.app/Contents/Resources/data/
 rsync -a --delete n64/ Pyrite64.app/Contents/Resources/n64/
