@@ -279,6 +279,7 @@ add_executable(pyrite64 src/main.cpp
         src/editor/globalActions.cpp
         src/editor/pages/parts/toolchainOverlay.cpp
         src/utils/toolchain.cpp
+        src/utils/libdragonVersions.cpp
         src/editor/imgui/notification.cpp
         src/utils/ringBuffer.h
         src/utils/time.cpp

@@ -16,6 +16,7 @@ namespace Utils
       {
         fs::path mingwPath{}; // empty if not found, always empty on linux
         fs::path toolchainPath{}; // empty if not found
+        std::string installedLibdragonCommit{};
         bool platformReady{}; // true if platform prerequisites are met (MSYS2 on Windows, Homebrew on macOS)
         bool hasToolchain{};
         bool hasLibdragon{};
@@ -29,7 +30,7 @@ namespace Utils
     public:
       void scan();
 
-      void install();
+      void install(const std::string &libdragonPin = "");
       bool isInstalling();
 
       bool runCmdSyncLogged(const std::string &cmd);

@@ -18,6 +18,10 @@ if ! command -v brew &>/dev/null; then
     exit 1
 fi
 
+if [ -n "${LIBDRAGON_PIN:-}" ]; then
+    echo "Libdragon pin: $LIBDRAGON_PIN"
+fi
+
 echo "=== Pyrite64 macOS Toolchain Installer ==="
 echo "Install path: $sdkpath"
 echo "Work path:    $workpath"
@@ -77,7 +81,13 @@ else
     cd libdragon
 fi
 
-if [[ ! -f "$sdkpath/bin/n64tool" || "${FORCE_UPDATE:-}" == "true" ]]; then
+# Pin to specific commit if requested
+if [ -n "${LIBDRAGON_PIN:-}" ]; then
+    echo "Pinning libdragon to: $LIBDRAGON_PIN"
+    git checkout "$LIBDRAGON_PIN"
+fi
+
+if [[ ! -f "$sdkpath/bin/n64tool" || "${FORCE_UPDATE:-}" == "true" || -n "${LIBDRAGON_PIN:-}" ]]; then
     make clean && make -C tools clean
     make -j"$(sysctl -n hw.ncpu)" libdragon && make -j"$(sysctl -n hw.ncpu)" tools
     make install
@@ -85,6 +95,10 @@ if [[ ! -f "$sdkpath/bin/n64tool" || "${FORCE_UPDATE:-}" == "true" ]]; then
 else
     echo "Libdragon already installed"
 fi
+
+# Record installed version
+git rev-parse HEAD > "$N64_INST/libdragon-version.txt"
+echo "Recorded libdragon version: $(cat "$N64_INST/libdragon-version.txt")"
 
 cd ..
 
@@ -101,7 +115,7 @@ else
     cd tiny3d
 fi
 
-if [[ ! -f "$sdkpath/bin/gltf_to_t3d" || "${FORCE_UPDATE:-}" == "true" ]]; then
+if [[ ! -f "$sdkpath/bin/gltf_to_t3d" || "${FORCE_UPDATE:-}" == "true" || -n "${LIBDRAGON_PIN:-}" ]]; then
     make clean
     make -j"$(sysctl -n hw.ncpu)"
     make install
