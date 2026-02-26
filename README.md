@@ -63,6 +63,7 @@ This fork adds the following on top of the upstream project:
 
 - **macOS on Apple Silicon** (M1 or later)
 - **Homebrew** ([brew.sh](https://brew.sh))
+- **Git LFS** — Font and asset files are stored in Git LFS. Install with `brew install git-lfs && git lfs install`, then `git lfs pull` if you've already cloned.
 - **Full Xcode** (from the App Store) — Command Line Tools alone are not sufficient, as the CLT ships with incomplete C++23/libc++ headers needed for building
 
 ## Quick Start
