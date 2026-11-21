@@ -1,5 +1,10 @@
 # Pyrite64 - macOS Edition
 
+> [!NOTE]
+> This fork is kept as a compatibility snapshot. Upstream Pyrite64 now supports Apple Silicon. New Mac users should use the [official upstream releases](https://github.com/HailToDodongo/pyrite64/releases).
+>
+> If your project is pinned to a [release from this fork](https://github.com/proverbiallemon/pyrite64-mac/releases), keep using that release unless you deliberately test an upgrade.
+
 <p align="center">
 <img src="./data/img/titleLogo.png" width="400">
 </p>
